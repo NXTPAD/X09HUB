@@ -1,15 +1,38 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "x09-hub",
-  "compatibility_date": "2025-09-01",
-  // Static site: everything in ./public is served as-is. No server code needed.
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  // The site in ./public; /api/* goes to the Worker (accounts, billing, Ask X09).
   "assets": {
     "directory": "./public",
+    "binding": "ASSETS",
     "not_found_handling": "404-page",
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/api/*"]
   },
+  // The SHARED X09 database (accounts, profiles, plans, chats, documents) — the same x09-db is
+  // bound by X09 Hub, X09 AI and X09 Docs, so one account works everywhere.
+  // The build step (scripts/setup-db.mjs) finds it by name and fills in the ID automatically.
+  "d1_databases": [
+    { "binding": "DB", "database_name": "x09-db", "database_id": "PASTE_YOUR_D1_DATABASE_ID", "migrations_dir": "migrations" }
+  ],
+  "vars": {
+    // Claude models (Anthropic API) for "Ask X09"
+    "AI_MODEL_FAST": "claude-haiku-4-5",
+    "AI_MODEL_DEEP": "claude-sonnet-5",
+    // Stripe Price IDs — OPTIONAL. Leave as-is and the Hub finds the active monthly price of the
+    // Stripe products named in src/core/catalog.js automatically.
+    "STRIPE_PRICE_PILOT": "price_REPLACE_ME",
+    "STRIPE_PRICE_COMMANDER": "price_REPLACE_ME",
+    "STRIPE_PRICE_FLEET": "price_REPLACE_ME",
+    "STRIPE_PRICE_SOLO": "price_REPLACE_ME",
+    "STRIPE_PRICE_PRO": "price_REPLACE_ME",
+    "STRIPE_PRICE_BUSINESS": "price_REPLACE_ME"
+  },
+  // Secrets — add in Cloudflare (Worker → Settings → Variables and Secrets), never commit them:
+  //   ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
   // Serves the hub at x09hub.com. The domain must be a zone on your Cloudflare account.
-  // Delete this "routes" block if you only want the free *.workers.dev address for now.
   "routes": [
     { "pattern": "x09hub.com", "custom_domain": true },
     { "pattern": "www.x09hub.com", "custom_domain": true }

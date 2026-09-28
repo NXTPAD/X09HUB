@@ -1,11 +1,16 @@
 {
   "name": "x09-hub",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
-  "description": "X09 Hub - the starting point for every X09 destination (Cloudflare Workers static site).",
+  "type": "module",
+  "description": "X09 Hub — the starting point for every X09 site: one X09 account, plans and Ask X09 (Cloudflare Workers + shared D1 + Stripe + Claude)",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "build": "node scripts/setup-db.mjs",
+    "deploy": "node scripts/setup-db.mjs && wrangler d1 migrations apply x09-db --remote && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply x09-db --remote",
+    "test": "node --experimental-sqlite --no-warnings test/api.test.mjs && node test/anthropic.test.mjs",
+    "test:server": "node --experimental-sqlite --no-warnings test/dev-server.mjs"
   },
   "devDependencies": {
     "wrangler": "^4.0.0"

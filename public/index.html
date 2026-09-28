@@ -1,687 +1,299 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#04050a">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
-<meta property="og:title" content="X09 Hub">
-<meta property="og:description" content="The starting point for every X09 destination.">
-<title>X09 Hub</title>
-<meta name="description" content="X09 Hub — the starting point for every X09 destination.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Michroma&display=swap">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>X09 Hub — every X09 mission starts here</title>
+<meta name="description" content="X09 Hub is the front door to X09 AI and X09 Docs. One X09 account, one profile, one bill — every X09 app." />
+<meta name="theme-color" content="#000000" />
+<link rel="icon" href="/x09/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/x09/icon-512.png" />
+<link rel="preload" href="/x09/fonts/michroma.woff" as="font" type="font/woff" crossorigin />
+<link rel="preload" href="/x09/fonts/space-grotesk.woff" as="font" type="font/woff" crossorigin />
+<link rel="stylesheet" href="/x09/x09.css" />
 <style>
-  :root {
-    color-scheme: dark;
-    --void: #04050a;
-    --deep: #0a0c14;
-    --panel: rgba(14, 17, 28, 0.72);
-    --line: #1d2233;
-    --line-strong: #2d344a;
-    --dust: #858ba3;
-    --haze: #b9bdcd;
-    --star: #eef0f7;
-    --ion: #a9c1ff;
-    --live: #7fe0b4;
-    --display: "Michroma", "Eurostile", "Arial Black", system-ui, sans-serif;
-    --body: "Hanken Grotesk", "Helvetica Neue", Arial, system-ui, sans-serif;
-    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
-  }
   * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-  html, body { background: var(--void); }
-  body {
-    color: var(--star);
-    font-family: var(--body);
-    font-size: 16px;
-    line-height: 1.55;
-    min-height: 100%;
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
-  }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font: 16px/1.6 var(--body); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+  button { font: inherit; color: inherit; cursor: pointer; }
   a { color: inherit; }
-  :focus-visible { outline: 2px solid var(--ion); outline-offset: 3px; border-radius: 4px; }
+  .wrap { position: relative; z-index: 1; width: min(1200px, 100% - 32px); margin: 0 auto; }
 
-  #sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; }
-  .glow {
-    position: fixed; inset: 0; z-index: 0; pointer-events: none;
-    background:
-      radial-gradient(60% 50% at 70% 40%, rgba(169, 193, 255, 0.07), transparent 70%),
-      radial-gradient(40% 35% at 15% 85%, rgba(238, 240, 247, 0.04), transparent 70%);
-  }
-
-  .wrap {
-    position: relative; z-index: 1;
-    max-width: 1200px; margin: 0 auto;
-    padding-inline: 24px;
-    padding-block: 0 40px;
-    display: flex; flex-direction: column; gap: 56px;
-  }
-
-  /* Top bar */
-  .bar {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px;
-    padding-block: 22px;
-    border-bottom: 1px solid var(--line);
-  }
+  /* Top bar — same as X09 AI / X09 Docs */
+  .topbar { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--hair); background: rgba(0,0,0,.55); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .topbar .wrap { height: 64px; display: flex; align-items: center; gap: 14px; }
   .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
-  .brand svg { width: 34px; height: 34px; flex: none; }
-  .wordmark { font-family: var(--display); font-size: 17px; letter-spacing: 0.08em; }
-  .wordmark small {
-    font-family: var(--mono); font-size: 11px; letter-spacing: 0.24em; color: var(--dust);
-    margin-left: 8px; vertical-align: 2px;
-  }
-  .bar-right { display: flex; align-items: center; gap: 18px; }
-  .clock { font-family: var(--mono); font-size: 12px; color: var(--dust); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
-  .clock b { color: var(--haze); font-weight: 500; }
-  .jump {
-    display: inline-flex; align-items: center; gap: 10px;
-    font: 500 13px var(--body); color: var(--haze);
-    background: transparent; border: 1px solid var(--line-strong); border-radius: 999px;
-    padding: 7px 8px 7px 14px; cursor: pointer; transition: border-color .2s, color .2s;
-  }
-  .jump:hover { border-color: var(--haze); color: var(--star); }
-  kbd {
-    font-family: var(--mono); font-size: 11px; color: var(--dust);
-    border: 1px solid var(--line-strong); border-radius: 6px; padding: 1px 6px; background: rgba(255,255,255,0.03);
-  }
+  .nav { display: flex; gap: 4px; margin-left: 18px; }
+  .nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font: 500 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .nav a:hover { color: var(--ink); background: rgba(255,255,255,.05); }
+  .grow { flex: 1; }
+  .clock { font: .72rem var(--mono); letter-spacing: .12em; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .account-btn { height: 34px; }
+  .account-btn.signed-in { width: 34px; }
 
   /* Hero */
-  .hero {
-    display: grid; grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
-    gap: 40px; align-items: center;
-  }
-  .eyebrow {
-    font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dust);
-    display: flex; align-items: center; gap: 10px;
-  }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--live); box-shadow: 0 0 10px var(--live); flex: none; }
-  h1 {
-    font-family: var(--display); font-weight: 400;
-    font-size: clamp(30px, 4.4vw, 52px); line-height: 1.12; letter-spacing: -0.01em;
-    margin: 18px 0 18px; text-wrap: balance;
-  }
-  h1 em { font-style: normal; color: var(--dust); }
-  .lede { color: var(--haze); font-size: 17px; max-width: 34em; margin: 0; }
+  .hero { display: grid; grid-template-columns: 1.02fr 1fr; gap: 40px; align-items: center; padding: 56px 0 30px; min-height: calc(100vh - 64px); min-height: calc(100dvh - 64px); }
+  .kicker { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 0 rgba(255,255,255,.6); animation: pulse 2.2s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 9px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
+  h1 { font-family: var(--display); font-weight: 400; font-size: clamp(2rem, 4.3vw, 3.5rem); line-height: 1.14; letter-spacing: -.005em; margin: 0 0 18px; }
+  h1 em { font-style: normal; color: var(--muted); }
+  .lede { color: #b9b9b9; font-size: 1.08rem; max-width: 33em; margin: 0 0 26px; }
 
-  /* Destination panel */
-  .dock {
-    margin-top: 32px;
-    background: var(--panel);
-    border: 1px solid var(--line-strong);
-    border-radius: 18px;
-    padding: 22px 22px 20px;
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    display: flex; flex-direction: column; gap: 14px;
-  }
-  .dock-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  .dock-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dust); }
-  .dock h2 { font-family: var(--display); font-weight: 400; font-size: 22px; letter-spacing: 0.02em; margin: 6px 0 0; }
-  .host { font-family: var(--mono); font-size: 13px; color: var(--ion); }
-  .chip {
-    display: inline-flex; align-items: center; gap: 7px; flex: none;
-    font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-    border: 1px solid var(--line-strong); border-radius: 999px; padding: 4px 10px; color: var(--haze);
-  }
-  .chip.live { border-color: rgba(127, 224, 180, 0.4); color: var(--live); }
-  .chip.live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--live); }
-  .chip.reserved::before { content: ""; width: 6px; height: 6px; border-radius: 50%; border: 1px dashed var(--dust); }
-  .dock p { margin: 0; color: var(--haze); font-size: 15px; }
-  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tag { font-family: var(--mono); font-size: 11px; color: var(--dust); border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px; }
-  .dock-actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
-  .launch {
-    display: inline-flex; align-items: center; gap: 12px;
-    background: var(--star); color: var(--void); text-decoration: none;
-    font: 600 15px var(--body); letter-spacing: 0.01em;
-    padding: 13px 20px; border-radius: 12px; border: 0; cursor: pointer;
-    transition: transform .15s ease, box-shadow .25s ease;
-    box-shadow: 0 0 0 0 rgba(238,240,247,0);
-  }
-  .launch:hover { transform: translateY(-1px); box-shadow: 0 8px 30px -8px rgba(238,240,247,0.45); }
-  .launch svg { width: 16px; height: 16px; }
-  .launch[aria-disabled="true"] {
-    background: transparent; color: var(--dust); border: 1px dashed var(--line-strong);
-    cursor: not-allowed; box-shadow: none; transform: none;
-  }
-  .hint { font-family: var(--mono); font-size: 12px; color: var(--dust); }
+  .dock { position: relative; padding: 22px 22px 20px; border: 1px solid var(--hair-2); border-radius: 6px; background: rgba(8,8,8,.72); backdrop-filter: blur(10px); }
+  .dock-top { display: flex; align-items: flex-start; gap: 14px; }
+  .dock-label { font: .66rem var(--mono); letter-spacing: .22em; text-transform: uppercase; color: var(--muted); }
+  .dock h2 { font-family: var(--display); font-weight: 400; font-size: 1.35rem; margin: 6px 0 0; letter-spacing: .02em; }
+  .host { font: .8rem var(--mono); color: var(--muted); }
+  .dock p { color: #bdbdbd; margin: 14px 0; font-size: .96rem; }
+  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 18px; }
+  .tag { font: .68rem var(--mono); color: var(--muted); border: 1px solid var(--hair-2); border-radius: 4px; padding: 3px 8px; }
+  .row-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  .btn-primary.inline, .btn-ghost.inline { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: auto; padding: 0 22px; text-decoration: none; }
+  .btn-primary.inline svg { transition: transform .2s; }
+  .btn-primary.inline:hover svg { transform: translateX(3px); }
+  .keys { font: .7rem var(--mono); color: var(--dim); margin-left: 4px; }
 
-  /* Orbit map */
-  .map { position: relative; }
-  .map svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .orbit { fill: none; stroke: var(--line-strong); stroke-width: 1; }
-  .orbit.sel { stroke: rgba(169, 193, 255, 0.45); }
-  .node { cursor: pointer; }
-  .node .hit { fill: transparent; }
-  .node .body-live { fill: url(#nodeLive); }
-  .node .body-res { fill: var(--deep); stroke: var(--dust); stroke-width: 1.2; stroke-dasharray: 3 3; }
-  .node .ring { fill: none; stroke: var(--ion); stroke-width: 1.2; opacity: 0; }
-  .node.sel .ring { opacity: 1; }
-  .node .lbl { font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; fill: var(--haze); text-anchor: middle; }
-  .node.sel .lbl { fill: var(--star); }
-  .node .sub { font-family: var(--mono); font-size: 10px; fill: var(--dust); text-anchor: middle; letter-spacing: 0.06em; }
-  .node:focus { outline: none; }
-  .node:focus-visible .ring { opacity: 1; stroke: var(--star); }
-  .map-legend {
-    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
-    font-family: var(--mono); font-size: 11px; color: var(--dust); letter-spacing: 0.08em;
-    border-top: 1px solid var(--line); padding-top: 12px; margin-top: 6px;
-  }
-  .pulse { animation: pulse 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-  @keyframes pulse { 0% { transform: scale(1); opacity: .7; } 100% { transform: scale(2.4); opacity: 0; } }
+  /* Orbit system (physics) */
+  .stage { position: relative; aspect-ratio: 1 / 1; width: 100%; max-width: 600px; justify-self: center; touch-action: pan-y; }
+  #orbit { width: 100%; height: 100%; display: block; cursor: grab; }
+  #orbit.dragging { cursor: grabbing; }
+  .stage-hint { position: absolute; left: 0; right: 0; bottom: -4px; text-align: center; font: .66rem var(--mono); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); pointer-events: none; }
 
-  /* Manifest */
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
-  .section-head h2 { font-family: var(--display); font-weight: 400; font-size: 16px; letter-spacing: 0.08em; margin: 0; }
-  .section-head span { font-family: var(--mono); font-size: 12px; color: var(--dust); }
-  .manifest { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
-  .row {
-    display: grid; grid-template-columns: 56px minmax(0, 1.2fr) minmax(0, 1fr) 120px 28px;
-    align-items: center; gap: 16px;
-    padding: 16px 12px; border-bottom: 1px solid var(--line);
-    cursor: pointer; transition: background .2s;
-    border-radius: 0;
-  }
-  .row:hover, .row.sel { background: rgba(238, 240, 247, 0.035); }
-  .row .num { font-family: var(--mono); font-size: 12px; color: var(--dust); font-variant-numeric: tabular-nums; }
-  .row .nm { font-weight: 600; font-size: 16px; }
-  .row .nm small { display: block; font-weight: 400; font-size: 13px; color: var(--dust); margin-top: 2px; }
-  .row .hs { font-family: var(--mono); font-size: 13px; color: var(--haze); overflow-wrap: anywhere; }
-  .row.res .hs { color: var(--dust); }
-  .row .go { color: var(--dust); justify-self: end; transition: transform .2s, color .2s; }
-  .row:hover .go, .row.sel .go { color: var(--star); transform: translateX(3px); }
-  .row .go svg { width: 16px; height: 16px; display: block; }
+  /* Sections */
+  section.block { padding: 80px 0 30px; }
+  .sec-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 26px; flex-wrap: wrap; }
+  .sec-head h2 { font-family: var(--display); font-weight: 400; font-size: clamp(1.25rem, 2.4vw, 1.7rem); letter-spacing: .04em; margin: 6px 0 0; }
+  .sec-head p { margin: 0; color: var(--muted); max-width: 30em; }
 
-  /* Footer */
-  footer {
-    display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    font-family: var(--mono); font-size: 12px; color: var(--dust); letter-spacing: 0.04em;
-    border-top: 1px solid var(--line); padding-top: 20px;
-  }
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { position: relative; display: flex; flex-direction: column; padding: 24px 22px 20px; border: 1px solid var(--hair-2); border-radius: 6px; background: rgba(8,8,8,.78); backdrop-filter: blur(8px); transform-style: preserve-3d; will-change: transform; }
+  .card:hover { border-color: rgba(255,255,255,.35); }
+  .card.reserved { border-style: dashed; background: rgba(8,8,8,.45); }
+  .card-top { display: flex; align-items: center; gap: 12px; }
+  .card h3 { margin: 0; font-family: var(--display); font-weight: 400; font-size: 1.1rem; letter-spacing: .03em; }
+  .card .host { display: block; }
+  .card p { color: #b5b5b5; margin: 16px 0 14px; font-size: .95rem; }
+  .card ul { list-style: none; padding: 0; margin: 0 0 18px; flex: 1; }
+  .card li { padding: 7px 0; border-top: 1px solid var(--hair); font-size: .88rem; color: var(--muted); }
+  .card li b { color: var(--ink); font-weight: 500; }
+  .price { font: .72rem var(--mono); letter-spacing: .12em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
+  .price b { font-family: var(--display); font-weight: 400; font-size: 1.5rem; color: var(--ink); letter-spacing: 0; text-transform: none; margin-right: 4px; }
+  .card .row-btns .btn-primary, .card .row-btns .btn-ghost { height: 40px; flex: 1; }
 
-  /* Warp overlay */
-  .warp {
-    position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; text-align: center;
-    background: radial-gradient(circle at center, rgba(4,5,10,0) 0%, rgba(4,5,10,0.55) 70%);
-    opacity: 0; pointer-events: none; transition: opacity .3s ease;
-    padding-inline: 24px;
-  }
+  /* Ask X09 */
+  .ask { display: grid; grid-template-columns: .8fr 1.2fr; gap: 30px; align-items: start; }
+  .ask-copy p { color: #b5b5b5; }
+  .ask-copy .suggestions { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-top: 18px; }
+  .chip { padding: 9px 14px; border: 1px solid var(--hair-2); border-radius: 99px; background: rgba(0,0,0,.4); color: var(--ink); font-size: .88rem; text-align: left; transition: border-color .2s, transform .25s cubic-bezier(.2,.8,.2,1); }
+  .chip:hover { border-color: rgba(255,255,255,.45); transform: translateX(3px); }
+  .console { position: relative; border: 1px solid var(--hair-2); border-radius: 4px; background: rgba(6,6,6,.85); backdrop-filter: blur(10px); }
+  .console-log { min-height: 250px; max-height: 420px; overflow-y: auto; padding: 20px 20px 6px; }
+  .console-empty { color: var(--dim); font: .78rem var(--mono); letter-spacing: .08em; padding: 70px 10px; text-align: center; }
+  .qa { margin-bottom: 18px; }
+  .qa .q { display: inline-block; max-width: 90%; padding: 8px 14px; border-radius: 14px 14px 4px 14px; background: #fff; color: #000; font-size: .93rem; margin-left: auto; }
+  .qa .q-row { display: flex; justify-content: flex-end; margin-bottom: 10px; }
+  .qa .a { color: #dcdcdc; font-size: .95rem; }
+  .qa .a p { margin: 0 0 10px; }
+  .qa .a ul { margin: 0 0 10px; padding-left: 20px; }
+  .qa .a code { font: .85em var(--mono); background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 4px; }
+  .qa .a.err { color: var(--muted); }
+  .cursor::after { content: "▍"; animation: blink 1s steps(1) infinite; color: #fff; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .console form { display: flex; gap: 10px; align-items: flex-end; padding: 12px; border-top: 1px solid var(--hair); }
+  .console textarea { flex: 1; min-width: 0; resize: none; border: 0; outline: 0; background: none; color: var(--ink); font: 1rem/1.5 var(--body); padding: 8px 6px; max-height: 140px; }
+  .console textarea::placeholder { color: var(--dim); }
+  .console .send { height: 40px; padding: 0 16px; border: 0; border-radius: 3px; background: #fff; color: #000; font: 600 .72rem var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+  .console .send:disabled { opacity: .35; cursor: default; }
+  .console-foot { padding: 0 14px 10px; font: .66rem var(--mono); color: var(--dim); letter-spacing: .06em; }
+
+  /* One account */
+  .id-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .feat { padding: 22px; border: 1px solid var(--hair); border-radius: 6px; background: rgba(8,8,8,.7); }
+  .feat h3 { margin: 12px 0 6px; font-weight: 500; font-size: 1.02rem; }
+  .feat p { margin: 0; color: var(--muted); font-size: .92rem; }
+  .feat-ico { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--hair-2); border-radius: 50%; }
+  .me-card { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; padding: 22px; border: 1px solid rgba(255,255,255,.3); border-radius: 6px; background: rgba(12,12,12,.85); flex-wrap: wrap; }
+  .me-card[hidden] { display: none; }
+  .me-av { width: 64px; height: 64px; font-size: 1.4rem; flex-shrink: 0; box-shadow: 0 0 30px rgba(255,255,255,.18); }
+  .me-id { flex: 1; min-width: 200px; }
+  .me-id b { font-family: var(--display); font-weight: 400; font-size: 1.1rem; display: block; }
+  .me-id span { color: var(--muted); font-size: .9rem; }
+  .me-chips { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .me-card .row-btns .btn-primary, .me-card .row-btns .btn-ghost { height: 40px; }
+
+  footer { position: relative; z-index: 1; margin-top: 80px; border-top: 1px solid var(--hair); }
+  footer .wrap { display: flex; align-items: center; gap: 14px; padding: 26px 0 40px; flex-wrap: wrap; color: var(--dim); font: .72rem var(--mono); letter-spacing: .08em; }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--ink); }
+
+  /* Warp to a destination */
+  .warp { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; text-align: center; background: radial-gradient(circle at 50% 50%, rgba(255,255,255,.14), #000 60%); opacity: 0; pointer-events: none; transition: opacity .45s; }
   .warp.on { opacity: 1; pointer-events: auto; }
-  .warp .t1 { font-family: var(--mono); font-size: 12px; letter-spacing: 0.3em; text-transform: uppercase; color: var(--dust); }
-  .warp .t2 { font-family: var(--display); font-size: clamp(24px, 5vw, 44px); margin: 12px 0 8px; }
-  .warp .t3 { font-family: var(--mono); font-size: 14px; color: var(--ion); }
+  .warp .t1 { font: .72rem var(--mono); letter-spacing: .3em; text-transform: uppercase; color: var(--muted); }
+  .warp .t2 { font-family: var(--display); font-size: clamp(1.6rem, 5vw, 2.8rem); margin: 12px 0 6px; }
+  .warp .t3 { font: .85rem var(--mono); color: var(--muted); }
+  .warp .ring { width: 120px; height: 120px; margin: 0 auto 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,.5); animation: grow 1.1s cubic-bezier(.2,.8,.2,1) infinite; }
+  @keyframes grow { from { transform: scale(.2); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
 
-  /* Command palette */
-  .palette-bg {
-    position: fixed; inset: 0; z-index: 50; background: rgba(4, 5, 10, 0.6);
-    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-    display: flex; justify-content: center; align-items: flex-start;
-    padding-inline: 16px; padding-block: 14vh 16px;
+  @media (max-width: 960px) {
+    .hero { grid-template-columns: 1fr; min-height: 0; padding-top: 34px; gap: 10px; }
+    .stage { order: -1; max-width: 460px; }
+    .cards, .id-grid { grid-template-columns: 1fr; }
+    .ask { grid-template-columns: 1fr; }
+    .nav, .clock { display: none; }
+    section.block { padding-top: 56px; }
   }
-  .palette {
-    width: 100%; max-width: 560px;
-    background: #0d1019; border: 1px solid var(--line-strong); border-radius: 16px;
-    box-shadow: 0 30px 80px -20px rgba(0,0,0,0.8);
-    overflow: hidden;
-  }
-  .palette label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
-  .palette input {
-    width: 100%; background: transparent; border: 0; border-bottom: 1px solid var(--line);
-    color: var(--star); font: 500 17px var(--body); padding: 18px 20px; outline: none;
-  }
-  .palette input::placeholder { color: var(--dust); }
-  .palette ul { list-style: none; margin: 0; padding: 8px; max-height: 320px; overflow-y: auto; }
-  .palette li {
-    display: flex; align-items: center; justify-content: space-between; gap: 12px;
-    padding: 12px 12px; border-radius: 10px; cursor: pointer; color: var(--haze);
-  }
-  .palette li span:last-child { font-family: var(--mono); font-size: 12px; color: var(--dust); }
-  .palette li.act { background: rgba(238, 240, 247, 0.06); color: var(--star); }
-  .palette .empty { color: var(--dust); padding: 14px 12px; font-size: 14px; }
-  .palette .foot { display: flex; gap: 16px; padding: 10px 16px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--dust); flex-wrap: wrap; }
-
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-
-  @media (max-width: 900px) {
-    .hero { display: flex; flex-direction: column; align-items: stretch; gap: 20px; }
-    .left { display: contents; }
-    .intro { order: 0; }
-    .map { order: 1; }
-    .dock { order: 2; }
-    .dock { margin-top: 0; }
-  }
-  @media (max-width: 640px) {
-    .wrap { padding-inline: 16px; gap: 40px; }
-    .bar { padding-block: 16px; }
-    .clock { display: none; }
-    .jump kbd { display: none; }
-    .jump { padding: 7px 14px; }
-    .lede { font-size: 16px; }
-    .row { grid-template-columns: 36px minmax(0, 1fr) 20px; gap: 12px; padding: 14px 4px; }
-    .row .hs, .row .st { display: none; }
-    .row .nm small { font-family: var(--mono); font-size: 12px; }
-    .dock-actions .hint { display: none; }
-    .launch { width: 100%; justify-content: center; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .pulse { animation: none; opacity: 0; }
-    .launch, .row .go, .warp { transition: none; }
+  @media (max-width: 520px) {
+    .topbar .wrap { height: 58px; gap: 10px; }
+    .x09-wordmark { font-size: .8rem; }
+    .dock { padding: 18px 16px; }
+    .keys { display: none; }
+    .me-card .row-btns { width: 100%; }
+    .me-card .row-btns > * { flex: 1; }
   }
 </style>
 </head>
-<body>
-
-
-<canvas id="sky" aria-hidden="true"></canvas>
-<div class="glow" aria-hidden="true"></div>
-
-<div class="wrap">
-  <header class="bar">
-    <a class="brand" href="#top" aria-label="X09 Hub home">
-      <svg viewBox="0 0 64 64" aria-hidden="true">
-        <defs>
-          <radialGradient id="lgSphere" cx="36%" cy="30%" r="75%">
-            <stop offset="0" stop-color="#ffffff"/>
-            <stop offset="0.45" stop-color="#a7a9b2"/>
-            <stop offset="1" stop-color="#0b0c10"/>
-          </radialGradient>
-          <clipPath id="lgBack"><rect x="0" y="0" width="64" height="32"/></clipPath>
-          <clipPath id="lgFront"><rect x="0" y="32" width="64" height="32"/></clipPath>
-        </defs>
-        <ellipse cx="32" cy="32" rx="29" ry="7" fill="none" stroke="#eef0f7" stroke-opacity="0.5" stroke-width="2" clip-path="url(#lgBack)" transform="rotate(-16 32 32)"/>
-        <circle cx="32" cy="32" r="17" fill="url(#lgSphere)"/>
-        <ellipse cx="32" cy="32" rx="29" ry="7" fill="none" stroke="#eef0f7" stroke-width="2.4" clip-path="url(#lgFront)" transform="rotate(-16 32 32)"/>
-      </svg>
-      <span class="wordmark">X09<small>HUB</small></span>
-    </a>
-    <div class="bar-right">
-      <span class="clock" aria-label="Coordinated Universal Time">UTC <b id="utc">--:--:--</b></span>
-      <button class="jump" id="openPalette" type="button" aria-haspopup="dialog">
-        <span class="jump-txt">Jump to</span><kbd id="kbdHint">⌘K</kbd>
-      </button>
+<body data-x09-bg>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/" aria-label="X09 Hub">
+        <span data-x09-logo="32"></span>
+        <span class="x09-wordmark">X09<small>HUB</small></span>
+      </a>
+      <nav class="nav" aria-label="Sections">
+        <a href="#destinations">Apps</a>
+        <a href="#ask">Ask X09</a>
+        <a href="#account">Account</a>
+      </nav>
+      <div class="grow"></div>
+      <span class="clock" id="clock">00:00:00 UTC</span>
+      <div data-x09-switcher></div>
+      <button class="account-btn" id="accountBtn">Sign in</button>
     </div>
   </header>
 
-  <main id="top" style="display:flex;flex-direction:column;gap:56px;">
-    <section class="hero" aria-labelledby="h1">
-      <div class="left">
-        <div class="intro">
-        <div class="eyebrow"><span class="dot" aria-hidden="true"></span>Launch window open · T+<span id="tplus">00:00</span></div>
+  <main class="wrap" data-x09-bg>
+    <section class="hero" aria-labelledby="h1" data-x09-bg>
+      <div>
+        <p class="kicker mono"><span class="dot"></span> Launch window open · <span id="tplus">T+ 00:00</span></p>
         <h1 id="h1">Every X09 mission <em>starts here.</em></h1>
-        <p class="lede">X09 Hub is the front door to everything X09. Pick a destination on the orbit map or from the manifest below, then launch.</p>
-        </div>
+        <p class="lede">One X09 account for every X09 app: the same sign-in, profile and billing on X09 AI and X09 Docs. Pick a world, or grab one and fling it.</p>
 
-        <article class="dock" id="dock" aria-live="polite">
-          <div class="dock-head">
-            <div>
-              <div class="dock-label" id="dOrbit">Orbit 01 · Selected</div>
+        <div class="dock" id="dock" data-x09-solid>
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <div class="dock-top">
+            <div class="grow">
+              <div class="dock-label" id="dLabel">Orbit 01 · selected</div>
               <h2 id="dName">X09 AI</h2>
-              <div class="host" id="dHost">ai.x09hub.com</div>
+              <span class="host" id="dHost">ai.x09hub.com</span>
             </div>
-            <span class="chip live" id="dChip">Live</span>
+            <span class="x09-chip on" id="dChip">Live</span>
           </div>
-          <p id="dBlurb">Your AI workspace. Sign in to your account, or choose a plan to get started.</p>
+          <p id="dBlurb">Your AI co-pilot.</p>
           <div class="tags" id="dTags"></div>
-          <div class="dock-actions">
-            <a class="launch" id="dLaunch" href="https://ai.x09hub.com" target="_blank" rel="noopener">
-              <span id="dLaunchTxt">Launch X09 AI</span>
-              <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <span class="hint"><kbd>←</kbd> <kbd>→</kbd> switch · <kbd>Enter</kbd> launch</span>
+          <div class="row-btns">
+            <a class="btn-primary inline" id="dLaunch" href="https://ai.x09hub.com" data-magnet>Launch X09 AI
+              <svg viewBox="0 0 16 16" width="15" height="15" fill="none"><path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+            <button class="btn-ghost inline" id="dPlans">See plans</button>
+            <span class="keys">← → switch · Enter launch</span>
           </div>
-        </article>
+        </div>
       </div>
 
-      <div class="map">
-        <svg id="orbits" viewBox="0 100 600 300" role="group" aria-label="Orbit map of X09 destinations">
-          <defs>
-            <radialGradient id="sphere" cx="36%" cy="30%" r="78%">
-              <stop offset="0" stop-color="#ffffff"/>
-              <stop offset="0.35" stop-color="#c9cbd3"/>
-              <stop offset="0.7" stop-color="#4a4d57"/>
-              <stop offset="1" stop-color="#07080b"/>
-            </radialGradient>
-            <radialGradient id="halo" cx="50%" cy="50%" r="50%">
-              <stop offset="0.55" stop-color="#eef0f7" stop-opacity="0.16"/>
-              <stop offset="1" stop-color="#eef0f7" stop-opacity="0"/>
-            </radialGradient>
-            <radialGradient id="nodeLive" cx="35%" cy="30%" r="80%">
-              <stop offset="0" stop-color="#ffffff"/>
-              <stop offset="0.6" stop-color="#9ea2ad"/>
-              <stop offset="1" stop-color="#1b1d24"/>
-            </radialGradient>
-            <clipPath id="frontHalf"><rect x="0" y="235" width="600" height="235"/></clipPath>
-            <clipPath id="backHalf"><rect x="0" y="0" width="600" height="235"/></clipPath>
-          </defs>
-          <g id="orbitRings"></g>
-          <g id="backNodes"></g>
-          <!-- center planet: X09 -->
-          <g id="core" aria-hidden="true">
-            <circle cx="300" cy="235" r="120" fill="url(#halo)"/>
-            <ellipse cx="300" cy="235" rx="118" ry="24" fill="none" stroke="#eef0f7" stroke-opacity="0.35" stroke-width="2" clip-path="url(#backHalf)" transform="rotate(-14 300 235)"/>
-            <circle cx="300" cy="235" r="66" fill="url(#sphere)"/>
-            <ellipse cx="300" cy="235" rx="118" ry="24" fill="none" stroke="#eef0f7" stroke-width="2.6" clip-path="url(#frontHalf)" transform="rotate(-14 300 235)"/>
-          </g>
-          <g id="frontNodes"></g>
-        </svg>
-        <div class="map-legend">
-          <span>● Live &nbsp; ◌ Reserved orbit</span>
-          <span id="mapHint">Hover to hold orbit · tap a world to select</span>
+      <div class="stage" id="stage">
+        <canvas id="orbit" aria-label="Interactive orbit map of X09 apps. Drag a world to fling it; tap to select."></canvas>
+        <div class="stage-hint">Drag a world · fling it · tap to select</div>
+      </div>
+    </section>
+
+    <section class="block" id="destinations" aria-labelledby="destTitle">
+      <div class="sec-head">
+        <div><p class="kicker mono">// Destination manifest</p><h2 id="destTitle">X09 APPS</h2></div>
+        <p>Each app has its own plans, and they all run on your one X09 account and billing.</p>
+      </div>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section class="block" id="ask" aria-labelledby="askTitle">
+      <div class="ask">
+        <div class="ask-copy">
+          <p class="kicker mono">// Ask X09 · powered by Claude</p>
+          <div class="sec-head" style="margin-bottom:10px"><h2 id="askTitle">NOT SURE WHERE TO START?</h2></div>
+          <p>Ask X09 which app and plan fits your work. It knows every X09 product, and it's included with any X09 plan.</p>
+          <div class="suggestions" id="askChips">
+            <button class="chip">Which X09 is right for a roofing business?</button>
+            <button class="chip">What's the difference between Fast and Deep?</button>
+            <button class="chip">Does one account work on every X09 site?</button>
+          </div>
+        </div>
+        <div class="console" data-x09-solid>
+          <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+          <div class="console-log" id="askLog" aria-live="polite"><div class="console-empty">// Channel open — transmit a question</div></div>
+          <form id="askForm" autocomplete="off">
+            <textarea id="askInput" rows="1" maxlength="2000" placeholder="Ask X09 anything about X09…" aria-label="Ask X09"></textarea>
+            <button class="send" id="askSend" type="submit" disabled data-magnet>Ask</button>
+          </form>
+          <div class="console-foot" id="askFoot">Included with any X09 plan · 100 questions / month</div>
         </div>
       </div>
     </section>
 
-    <section aria-labelledby="manifestTitle">
-      <div class="section-head">
-        <h2 id="manifestTitle">DESTINATION MANIFEST</h2>
-        <span id="manifestCount">2 live · 1 reserved</span>
+    <section class="block" id="account" aria-labelledby="idTitle">
+      <div class="sec-head">
+        <div><p class="kicker mono">// X09 ID</p><h2 id="idTitle">ONE ACCOUNT. EVERY APP.</h2></div>
+        <p>Your profile, photo and plans follow you across x09hub.com, ai.x09hub.com and docs.x09hub.com.</p>
       </div>
-      <ul class="manifest" id="manifest"></ul>
+      <div class="id-grid">
+        <div class="me-card" id="meCard" hidden>
+          <div class="x09-avatar me-av" id="meAv"></div>
+          <div class="me-id"><b id="meName"></b><span id="meEmail"></span><div class="me-chips" id="meChips"></div></div>
+          <div class="row-btns">
+            <button class="btn-primary inline" id="meOpen">Account &amp; plans</button>
+            <button class="btn-ghost inline" id="meBilling">Billing</button>
+          </div>
+        </div>
+        <div class="me-card" id="guestCard">
+          <div class="x09-avatar me-av" style="background:#111;color:#fff;border:1px solid var(--hair-2)">?</div>
+          <div class="me-id"><b>Create your X09 ID</b><span>Sign in once and you're signed in on every X09 app.</span></div>
+          <div class="row-btns">
+            <button class="btn-primary inline" id="guestSignup">Create account</button>
+            <button class="btn-ghost inline" id="guestLogin">Sign in</button>
+          </div>
+        </div>
+        <div class="feat" data-tilt>
+          <div class="feat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <h3>One sign-in</h3><p>Sign in on the Hub and you're already in X09 AI and X09 Docs. Sign out once, and you're out everywhere.</p>
+        </div>
+        <div class="feat" data-tilt>
+          <div class="feat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><rect x="4" y="4" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="11" r="3" stroke="currentColor" stroke-width="1.6"/><path d="M7 18c1.2-2 3-3 5-3s3.8 1 5 3" stroke="currentColor" stroke-width="1.6"/></svg></div>
+          <h3>One profile</h3><p>Your name, company and photo live in one place and show up in every app.</p>
+        </div>
+        <div class="feat" data-tilt>
+          <div class="feat-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none"><rect x="3" y="6" width="18" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <h3>One bill</h3><p>Every plan is on one Stripe billing account. Upgrade, switch or cancel any app's plan in one portal.</p>
+        </div>
+      </div>
     </section>
   </main>
 
   <footer>
-    <span>© <span id="yr">2026</span> X09 · x09hub.com</span>
-    <span>All X09 products launch from this hub</span>
+    <div class="wrap">
+      <span data-x09-logo="22"></span>
+      <span>X09 · x09hub.com</span>
+      <span class="grow"></span>
+      <a href="https://ai.x09hub.com">X09 AI</a>
+      <a href="https://docs.x09hub.com">X09 Docs</a>
+      <span>Double-click empty space to launch a moon · hold to open a gravity well</span>
+    </div>
   </footer>
-</div>
 
-<div class="warp" id="warp" aria-hidden="true">
-  <div>
-    <div class="t1">Launching</div>
-    <div class="t2" id="warpName">X09 AI</div>
-    <div class="t3" id="warpHost">ai.x09hub.com</div>
+  <div class="warp" id="warp" aria-hidden="true">
+    <div><div class="ring"></div><div class="t1">Warping to</div><div class="t2" id="warpName">X09 AI</div><div class="t3" id="warpHost">ai.x09hub.com</div></div>
   </div>
-</div>
 
-<div class="palette-bg" id="paletteBg" hidden>
-  <div class="palette" role="dialog" aria-modal="true" aria-label="Jump to a destination">
-    <label for="paletteInput">Search destinations</label>
-    <input id="paletteInput" type="text" placeholder="Where to?" autocomplete="off" spellcheck="false">
-    <ul id="paletteList" role="listbox" aria-label="Destinations"></ul>
-    <div class="foot"><span><kbd>↑</kbd> <kbd>↓</kbd> move</span><span><kbd>Enter</kbd> select</span><span><kbd>Esc</kbd> close</span></div>
-  </div>
-</div>
-
-<script>
-(() => {
-  /* ------------------------------------------------------------------
-     DESTINATIONS — edit this list to add or change where the hub points.
-     status: "live" (clickable) or "reserved" (shown as a placeholder).
-     ------------------------------------------------------------------ */
-  const DESTINATIONS = [
-    {
-      id: "x09-ai", name: "X09 AI", host: "ai.x09hub.com", url: "https://ai.x09hub.com",
-      status: "live", orbit: 1, sub: "AI workspace",
-      blurb: "Your AI workspace. Sign in to your account, or choose a plan to get started.",
-      tags: ["Accounts", "Paid plans", "Web app"]
-    },
-    {
-      id: "x09-docs", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com",
-      status: "live", orbit: 2, sub: "AI business documents",
-      blurb: "AI-written invoices, estimates, proposals, quotes and contracts, powered by the same AI as X09 AI.",
-      tags: ["Invoices", "Estimates", "Proposals", "Contracts", "Paid plans"]
-    },
-    {
-      id: "orbit-03", name: "Orbit 03", host: "Reserved", url: null,
-      status: "reserved", orbit: 3, sub: "Future product",
-      blurb: "An open orbit for a future X09 product.",
-      tags: ["Open slot"]
-    }
-  ];
-  /* When deployed on x09hub.com, set to true to warp and open the destination in the same tab. */
-  const SAME_TAB = true;
-
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const $ = (id) => document.getElementById(id);
-  const svgNS = "http://www.w3.org/2000/svg";
-  const pad2 = (n) => String(n).padStart(2, "0");
-  const arrow = '<svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-  let selected = 0;
-
-  /* ---------------- Starfield ---------------- */
-  const sky = $("sky"), ctx = sky.getContext("2d");
-  let W = 0, H = 0, DPR = 1, stars = [];
-  let pointer = { x: 0, y: 0 }, drift = { x: 0, y: 0 };
-  let warpSpeed = 0, warpTarget = 0;
-  const STAR_COUNT = () => Math.round(Math.min(420, (W * H) / 4200));
-  function newStar(far) {
-    return { x: (Math.random() - 0.5) * 2, y: (Math.random() - 0.5) * 2, z: far ? 1 : Math.random() * 0.95 + 0.05, tw: Math.random() * Math.PI * 2, pz: 0 };
-  }
-  function resize() {
-    DPR = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
-    sky.width = W * DPR; sky.height = H * DPR;
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    stars = Array.from({ length: STAR_COUNT() }, () => newStar(false));
-  }
-  function drawSky(t) {
-    drift.x += (pointer.x - drift.x) * 0.04;
-    drift.y += (pointer.y - drift.y) * 0.04;
-    warpSpeed += (warpTarget - warpSpeed) * 0.06;
-    ctx.fillStyle = warpSpeed > 0.002 ? "rgba(4,5,10,0.35)" : "#04050a";
-    ctx.fillRect(0, 0, W, H);
-    const cx = W / 2 - drift.x * 24, cy = H / 2 - drift.y * 24;
-    const scale = Math.max(W, H) * 0.6;
-    const speed = reduceMotion ? 0 : 0.00035 + warpSpeed;
-    for (const s of stars) {
-      s.pz = s.z;
-      s.z -= speed;
-      if (s.z <= 0.02) { Object.assign(s, newStar(true)); s.pz = s.z; }
-      const sx = cx + (s.x / s.z) * scale * 0.5, sy = cy + (s.y / s.z) * scale * 0.5;
-      if (sx < -50 || sx > W + 50 || sy < -50 || sy > H + 50) { Object.assign(s, newStar(true)); continue; }
-      const depth = 1 - s.z;
-      const tw = reduceMotion ? 1 : 0.75 + 0.25 * Math.sin(t * 0.002 + s.tw);
-      const a = Math.min(1, depth * 1.2) * tw;
-      if (warpSpeed > 0.003) {
-        const px = cx + (s.x / s.pz) * scale * 0.5, py = cy + (s.y / s.pz) * scale * 0.5;
-        ctx.strokeStyle = `rgba(238,240,247,${a})`;
-        ctx.lineWidth = 0.6 + depth * 1.6;
-        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(sx, sy); ctx.stroke();
-      } else {
-        const r = 0.3 + depth * 1.4;
-        ctx.fillStyle = s.tw > 5.9 ? `rgba(169,193,255,${a})` : `rgba(238,240,247,${a})`;
-        ctx.beginPath(); ctx.arc(sx, sy, r, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-  }
-  window.addEventListener("resize", resize);
-  window.addEventListener("pointermove", (e) => {
-    pointer.x = (e.clientX / W - 0.5) * 2; pointer.y = (e.clientY / H - 0.5) * 2;
-  }, { passive: true });
-
-  /* ---------------- Orbit map ---------------- */
-  const CX = 300, CY = 235, TILT = 0.36;
-  const RADII = { 1: 158, 2: 218, 3: 276 };
-  const SPEED = { 1: 0.00016, 2: 0.00011, 3: 0.00007 }; // radians per ms
-  const START = { 1: 1.15, 2: -0.35, 3: 3.55 };
-  const ringsG = $("orbitRings"), backG = $("backNodes"), frontG = $("frontNodes");
-  const nodes = [];
-  let holding = false, lastT = performance.now();
-
-  DESTINATIONS.forEach((d, i) => {
-    const rx = RADII[d.orbit], ry = rx * TILT;
-    const ring = document.createElementNS(svgNS, "ellipse");
-    ring.setAttribute("cx", CX); ring.setAttribute("cy", CY);
-    ring.setAttribute("rx", rx); ring.setAttribute("ry", ry);
-    ring.setAttribute("class", "orbit");
-    if (d.status === "reserved") ring.setAttribute("stroke-dasharray", "2 6");
-    ringsG.appendChild(ring);
-
-    const g = document.createElementNS(svgNS, "g");
-    g.setAttribute("class", "node");
-    g.setAttribute("tabindex", "0");
-    g.setAttribute("role", "button");
-    g.setAttribute("aria-label", `${d.name}, ${d.status === "live" ? "live at " + d.host : "reserved orbit"}`);
-    const r = d.status === "live" ? 13 : 9;
-    g.innerHTML = `
-      <circle class="hit" r="30"></circle>
-      ${d.status === "live" ? `<circle class="pulse" r="${r}" fill="none" stroke="#eef0f7" stroke-width="1"></circle>` : ""}
-      <circle class="ring" r="${r + 7}"></circle>
-      <circle class="${d.status === "live" ? "body-live" : "body-res"}" r="${r}"></circle>
-      <text class="lbl" y="${r + 22}">${d.name.toUpperCase()}</text>
-      <text class="sub" y="${r + 37}">${d.status === "live" ? d.host : "reserved"}</text>`;
-    g.addEventListener("click", () => select(i));
-    g.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (selected === i) launch(i); else select(i); }
-    });
-    frontG.appendChild(g);
-    nodes.push({ d, g, ring, rx, ry, a: START[d.orbit], front: true });
-  });
-
-  function placeNodes(dt) {
-    for (const n of nodes) {
-      if (!holding && !reduceMotion) n.a += SPEED[n.d.orbit] * dt;
-      const x = CX + n.rx * Math.cos(n.a), y = CY + n.ry * Math.sin(n.a);
-      const depth = (Math.sin(n.a) + 1) / 2; // 0 back → 1 front
-      const s = 0.72 + depth * 0.38;
-      n.g.setAttribute("transform", `translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})`);
-      n.g.style.opacity = (0.55 + depth * 0.45).toFixed(2);
-      const front = Math.sin(n.a) >= 0 || Math.abs(x - CX) > 72;
-      if (front !== n.front) { (front ? frontG : backG).appendChild(n.g); n.front = front; }
-    }
-  }
-  const map = $("orbits");
-  map.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") holding = true; });
-  map.addEventListener("pointerleave", () => { holding = false; });
-
-  /* ---------------- Manifest + dock ---------------- */
-  const manifest = $("manifest");
-  DESTINATIONS.forEach((d, i) => {
-    const li = document.createElement("li");
-    li.className = "row" + (d.status === "reserved" ? " res" : "");
-    li.tabIndex = 0;
-    li.innerHTML = `
-      <span class="num">${pad2(d.orbit)}</span>
-      <span class="nm">${d.name}<small>${d.sub}</small></span>
-      <span class="hs">${d.status === "live" ? d.host : "—"}</span>
-      <span class="st"><span class="chip ${d.status}">${d.status === "live" ? "Live" : "Reserved"}</span></span>
-      <span class="go">${arrow}</span>`;
-    li.addEventListener("click", () => { select(i); $("dock").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }); });
-    li.addEventListener("keydown", (e) => { if (e.key === "Enter") { if (selected === i) launch(i); else select(i); } });
-    manifest.appendChild(li);
-  });
-  const liveCount = DESTINATIONS.filter((d) => d.status === "live").length;
-  $("manifestCount").textContent = `${liveCount} live · ${DESTINATIONS.length - liveCount} reserved`;
-
-  function select(i) {
-    selected = (i + DESTINATIONS.length) % DESTINATIONS.length;
-    const d = DESTINATIONS[selected];
-    $("dOrbit").textContent = `Orbit ${pad2(d.orbit)} · Selected`;
-    $("dName").textContent = d.name;
-    $("dHost").textContent = d.status === "live" ? d.host : "No address yet";
-    const chip = $("dChip");
-    chip.className = "chip " + d.status;
-    chip.textContent = d.status === "live" ? "Live" : "Reserved";
-    $("dBlurb").textContent = d.blurb;
-    $("dTags").innerHTML = d.tags.map((t) => `<span class="tag">${t}</span>`).join("");
-    const btn = $("dLaunch");
-    if (d.status === "live") {
-      btn.href = d.url; btn.removeAttribute("aria-disabled"); btn.removeAttribute("tabindex");
-      $("dLaunchTxt").textContent = `Launch ${d.name}`;
-    } else {
-      btn.removeAttribute("href"); btn.setAttribute("aria-disabled", "true");
-      $("dLaunchTxt").textContent = "Not docked yet";
-    }
-    nodes.forEach((n, k) => { n.g.classList.toggle("sel", k === selected); n.ring.classList.toggle("sel", k === selected); });
-    [...manifest.children].forEach((li, k) => li.classList.toggle("sel", k === selected));
-  }
-
-  /* ---------------- Launch ---------------- */
-  let warpTimer;
-  function playWarp(d) {
-    $("warpName").textContent = d.name;
-    $("warpHost").textContent = d.host;
-    const w = $("warp");
-    w.classList.add("on");
-    warpTarget = reduceMotion ? 0 : 0.028;
-    clearTimeout(warpTimer);
-    warpTimer = setTimeout(() => { warpTarget = 0; w.classList.remove("on"); }, 1500);
-  }
-  function launch(i) {
-    const d = DESTINATIONS[i];
-    if (d.status !== "live") return;
-    playWarp(d);
-    if (SAME_TAB) setTimeout(() => location.assign(d.url), 1100);
-    else {
-      const a = document.createElement("a");
-      a.href = d.url; a.target = "_blank"; a.rel = "noopener"; a.click();
-    }
-  }
-  $("dLaunch").addEventListener("click", (e) => {
-    const d = DESTINATIONS[selected];
-    if (d.status !== "live") { e.preventDefault(); return; }
-    if (SAME_TAB) { e.preventDefault(); playWarp(d); setTimeout(() => location.assign(d.url), 1100); }
-    else playWarp(d);
-  });
-
-  /* ---------------- Command palette ---------------- */
-  const bg = $("paletteBg"), input = $("paletteInput"), list = $("paletteList");
-  let pIdx = 0, pItems = [];
-  const isMac = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  $("kbdHint").textContent = isMac ? "⌘K" : "Ctrl K";
-  function renderPalette() {
-    const q = input.value.trim().toLowerCase();
-    pItems = DESTINATIONS.map((d, i) => ({ d, i })).filter(({ d }) =>
-      !q || [d.name, d.host, d.sub, ...d.tags].join(" ").toLowerCase().includes(q));
-    pIdx = Math.min(pIdx, Math.max(0, pItems.length - 1));
-    list.innerHTML = pItems.length
-      ? pItems.map(({ d }, k) => `<li role="option" data-k="${k}" class="${k === pIdx ? "act" : ""}" aria-selected="${k === pIdx}"><span>${d.name}</span><span>${d.status === "live" ? d.host : "reserved"}</span></li>`).join("")
-      : `<div class="empty">No destination matches “${input.value.replace(/[<>&"]/g, "")}”.</div>`;
-  }
-  function openPalette() { bg.hidden = false; input.value = ""; pIdx = 0; renderPalette(); input.focus(); }
-  function closePalette() { bg.hidden = true; $("openPalette").focus(); }
-  function choose(k) {
-    const item = pItems[k]; if (!item) return;
-    closePalette(); select(item.i);
-    if (item.d.status === "live") launch(item.i);
-  }
-  $("openPalette").addEventListener("click", openPalette);
-  bg.addEventListener("click", (e) => { if (e.target === bg) closePalette(); });
-  list.addEventListener("click", (e) => { const li = e.target.closest("li"); if (li) choose(+li.dataset.k); });
-  input.addEventListener("input", () => { pIdx = 0; renderPalette(); });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "ArrowDown") { e.preventDefault(); pIdx = Math.min(pItems.length - 1, pIdx + 1); renderPalette(); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); pIdx = Math.max(0, pIdx - 1); renderPalette(); }
-    else if (e.key === "Enter") { e.preventDefault(); choose(pIdx); }
-    else if (e.key === "Escape") { e.preventDefault(); closePalette(); }
-  });
-  document.addEventListener("keydown", (e) => {
-    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); bg.hidden ? openPalette() : closePalette(); return; }
-    if (!bg.hidden) return;
-    const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
-    if (typing) return;
-    if (e.key === "/") { e.preventDefault(); openPalette(); }
-    else if (e.key === "ArrowRight") { select(selected + 1); }
-    else if (e.key === "ArrowLeft") { select(selected - 1); }
-    else if (e.key === "Enter" && (document.activeElement === document.body)) { launch(selected); }
-  });
-
-  /* ---------------- Clocks ---------------- */
-  const t0 = Date.now();
-  function tick() {
-    const now = new Date();
-    $("utc").textContent = `${pad2(now.getUTCHours())}:${pad2(now.getUTCMinutes())}:${pad2(now.getUTCSeconds())}`;
-    const s = Math.floor((Date.now() - t0) / 1000);
-    $("tplus").textContent = `${pad2(Math.floor(s / 60))}:${pad2(s % 60)}`;
-    $("yr").textContent = now.getFullYear();
-  }
-  setInterval(tick, 1000); tick();
-
-  /* ---------------- Loop ---------------- */
-  if (!window.matchMedia("(hover: hover)").matches) $("mapHint").textContent = "Tap a world to select it";
-  resize(); select(0); placeNodes(0);
-  function frame(t) {
-    const dt = Math.min(64, t - lastT); lastT = t;
-    drawSky(t); placeNodes(dt);
-    requestAnimationFrame(frame);
-  }
-  requestAnimationFrame(frame);
-})();
-</script>
-
+<script src="/x09/x09-space.js" defer></script>
+<script src="/x09/x09-account.js" defer></script>
+<script src="/hub.js" defer></script>
 </body>
 </html>
