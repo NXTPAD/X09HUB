@@ -25,7 +25,7 @@
   let catalog = [];
   let selected = 0;
 
-  const space = X09Space.start({ density: 1.1, opacity: 1, warp: 0.13 });
+  const space = X09Space.start({ density: 1.1, opacity: 1, warp: 0.13, bodies: false });
   X09.init({ site: "hub", onUser: renderUser });
 
   /* ================= Orbit system (Newtonian gravity on an inclined plane) ================= */
