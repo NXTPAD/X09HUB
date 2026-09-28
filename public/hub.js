@@ -7,13 +7,13 @@
      `product` links a destination to its plans in the shared X09 catalog.
      ------------------------------------------------------------------ */
   const DESTINATIONS = [
-    { id: "ai", product: "ai", orb: "AI", name: "X09 AI", host: "ai.x09hub.com", url: "https://ai.x09hub.com", live: true, hue: "0,0,0",
+    { id: "ai", product: "ai", orb: "AI", name: "X09 AI", host: "ai.x09hub.com", url: "https://ai.x09hub.com", live: true, hue: "255,255,255",
       blurb: "Your AI co-pilot. Ask anything, plan, write, code and analyze. Fast mode runs on Claude Haiku, Deep mode on Claude Sonnet.",
       feats: ["Claude Haiku + Sonnet", "Fast & Deep modes", "Chats synced to your account", "Code, plans, emails"] },
-    { id: "docs", product: "docs", orb: "DOC", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "55,55,55",
+    { id: "docs", product: "docs", orb: "DOC", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "200,200,200",
       blurb: "AI invoices, estimates, proposals and contracts. Describe the job and X09 drafts it. Clients view, download and e-sign.",
       feats: ["AI drafts", "E-signature", "PDF + client links", "Estimate → invoice"] },
-    { id: "o3", orb: "03", name: "Orbit 03", host: "Reserved", url: null, live: false, hue: "115,115,115",
+    { id: "o3", orb: "03", name: "Orbit 03", host: "Reserved", url: null, live: false, hue: "140,140,140",
       blurb: "An open orbit for the next X09 app. Same account, same bill, when it lands.", feats: [] },
   ];
   const SAME_TAB = true;
@@ -25,7 +25,7 @@
   let catalog = [];
   let selected = 0;
 
-  const space = X09Space.start({ density: 1.1, opacity: 1 });
+  const space = X09Space.start({ density: 1.1, opacity: 1, warp: 0.13 });
   X09.init({ site: "hub", onUser: renderUser });
 
   /* ================= Orbit system (Newtonian gravity on an inclined plane) ================= */
@@ -34,7 +34,7 @@
   let W = 0, H = 0, DPR = 1, CX = 0, CY = 0, U = 0, Rp = 0, GM = 0;
   const worlds = DESTINATIONS.map((d, i) => ({ d, i, x: 0, y: 0, vx: 0, vy: 0, r: 0, home: 0, trail: [], glow: 0 }));
   const belt = Array.from({ length: 140 }, () => ({ a: Math.random() * TAU, rr: 0.36 + Math.random() * 0.06, s: 0.5 + Math.random() * 1.4, z: Math.random(), h: Math.floor(Math.random() * 3) }));
-  const HUES = ["0,0,0", "60,60,60", "120,120,120"];
+  const HUES = ["255,255,255", "200,200,200", "140,140,140"];
 
   function layout() {
     DPR = Math.min(devicePixelRatio || 1, 2);
@@ -132,17 +132,15 @@
     }
   }
 
-  function sphere(x, y, r, hue) {
-    const gr = g.createRadialGradient(x - r * 0.36, y - r * 0.4, r * 0.06, x, y, r);
-    gr.addColorStop(0, "#c2c2c2"); gr.addColorStop(0.28, "#4d4d4d"); gr.addColorStop(0.72, "#151515"); gr.addColorStop(1, "#000");
-    g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
-    if (hue) { // aurora rim light
-      g.globalCompositeOperation = "lighter";
-      const rim = g.createRadialGradient(x + r * 0.55, y + r * 0.5, 0, x + r * 0.35, y + r * 0.3, r * 1.15);
-      rim.addColorStop(0, "rgba(255,255,255,.3)"); rim.addColorStop(1, "rgba(255,255,255,0)");
-      g.fillStyle = rim; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
-      g.globalCompositeOperation = "source-over";
-    }
+  // Wireframe globe (terminal style): black disc, white outline, meridians and latitude lines
+  function sphere(x, y, r, hue, spin = 0) {
+    g.fillStyle = "#000"; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+    g.save(); g.beginPath(); g.arc(x, y, r, 0, TAU); g.clip();
+    g.strokeStyle = "rgba(255,255,255,.35)"; g.lineWidth = 1;
+    for (let k = -2; k <= 2; k++) { const yy = y + (k / 3) * r; const w = Math.sqrt(Math.max(0, r * r - (yy - y) ** 2)); g.beginPath(); g.ellipse(x, yy, w, w * 0.18, 0, 0, TAU); g.stroke(); }
+    for (let k = 0; k < 4; k++) { const ph = ((k / 4) * Math.PI + spin) % Math.PI; g.beginPath(); g.ellipse(x, y, Math.abs(Math.cos(ph)) * r, r, 0, 0, TAU); g.stroke(); }
+    g.restore();
+    g.strokeStyle = "#fff"; g.lineWidth = 1.5; g.beginPath(); g.arc(x, y, r, 0, TAU); g.stroke();
   }
   function drawWorld(w, t) {
     const p = proj(w.x, w.y), r = w.r * p.k, sel = w.i === selected, live = w.d.live, hue = w.d.hue;
@@ -154,26 +152,26 @@
       }
     }
     const gl = g.createRadialGradient(p.sx, p.sy, r * 0.8, p.sx, p.sy, r * 3.4);
-    gl.addColorStop(0, `rgba(0,0,0,${(sel ? 0.16 : 0.07) + w.glow * 0.2})`); gl.addColorStop(1, "rgba(0,0,0,0)");
+    gl.addColorStop(0, `rgba(${hue},${(sel ? 0.35 : 0.18) + w.glow * 0.35})`); gl.addColorStop(1, `rgba(${hue},0)`);
     g.fillStyle = gl; g.beginPath(); g.arc(p.sx, p.sy, r * 3.4, 0, TAU); g.fill();
-    if (live) sphere(p.sx, p.sy, r, hue);
+    if (live) sphere(p.sx, p.sy, r, hue, t / 1400 + w.i);
     else { g.setLineDash([3, 4]); g.strokeStyle = `rgba(${hue},.8)`; g.lineWidth = 1.5; g.beginPath(); g.arc(p.sx, p.sy, r, 0, TAU); g.stroke(); g.setLineDash([]); }
     if (w.d.id === "docs") {
       g.save(); g.translate(p.sx, p.sy); g.rotate(-0.35);
       g.strokeStyle = `rgba(${hue},.9)`; g.lineWidth = 1.6; g.beginPath(); g.ellipse(0, 0, r * 1.8, r * 0.45, 0, 0, Math.PI); g.stroke(); g.restore();
     }
     if (sel) {
-      g.strokeStyle = "rgba(0,0,0,.85)"; g.lineWidth = 1.2; g.setLineDash([4, 5]); g.lineDashOffset = -t / 40;
+      g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 1.2; g.setLineDash([4, 5]); g.lineDashOffset = -t / 40;
       g.beginPath(); g.arc(p.sx, p.sy, r + 9, 0, TAU); g.stroke(); g.setLineDash([]);
     }
     // label pill
     const label = w.d.name, fs = Math.max(11, Math.min(14, U * 0.03));
-    g.font = `700 ${fs}px Manrope, sans-serif`;
+    g.font = `700 ${fs}px "JetBrains Mono", monospace`;
     const tw = g.measureText(label).width, lx = p.sx - tw / 2 - 10, ly = p.sy + r + 12, lh = fs + 12;
-    g.fillStyle = sel ? "#000" : "rgba(255,255,255,.9)";
-    g.strokeStyle = sel ? "transparent" : "rgba(0,0,0,.16)"; g.lineWidth = 1;
-    g.beginPath(); g.roundRect(lx, ly, tw + 20, lh, lh / 2); g.fill(); g.stroke();
-    g.fillStyle = sel ? "#fff" : live ? "#111" : "rgba(17,17,17,.5)"; g.textAlign = "center"; g.textBaseline = "middle";
+    g.fillStyle = sel ? "#fff" : "#000";
+    g.strokeStyle = sel ? "#fff" : "rgba(255,255,255,.45)"; g.lineWidth = 1;
+    g.beginPath(); g.rect(lx, ly, tw + 20, lh); g.fill(); g.stroke();
+    g.fillStyle = sel ? "#000" : live ? "#fff" : "rgba(255,255,255,.5)"; g.textAlign = "center"; g.textBaseline = "middle";
     g.fillText(label, p.sx, ly + lh / 2 + 0.5);
   }
 
@@ -191,7 +189,7 @@
       g.setLineDash([]);
       // planet halo (aurora)
       const halo = g.createRadialGradient(CX, CY, Rp * 0.5, CX, CY, Rp * 3.6);
-      halo.addColorStop(0, "rgba(0,0,0,.14)"); halo.addColorStop(0.5, "rgba(0,0,0,.04)"); halo.addColorStop(1, "rgba(0,0,0,0)");
+      halo.addColorStop(0, "rgba(255,255,255,.35)"); halo.addColorStop(0.5, "rgba(200,200,200,.08)"); halo.addColorStop(1, "rgba(200,200,200,0)");
       g.fillStyle = halo; g.beginPath(); g.arc(CX, CY, Rp * 3.6, 0, TAU); g.fill();
       const spin = reduce ? 0 : t / 9000;
       const beltDots = (front) => {
@@ -213,12 +211,12 @@
       };
       const wob = reduce ? 0 : Math.sin(t / 2400) * 3;
       const ringGrad = g.createLinearGradient(CX - Rp * 2, CY, CX + Rp * 2, CY);
-      ringGrad.addColorStop(0, "#000"); ringGrad.addColorStop(0.55, "#1c1c1c"); ringGrad.addColorStop(1, "#555");
+      ringGrad.addColorStop(0, "#ffffff"); ringGrad.addColorStop(0.55, "#c4c4c4"); ringGrad.addColorStop(1, "#7c7c7c");
       g.lineCap = "round";
-      for (const deg of [-30 + wob, 30 - wob]) { ring(deg, false); g.strokeStyle = "rgba(0,0,0,.4)"; g.lineWidth = Math.max(1.4, Rp * 0.045); g.stroke(); }
-      sphere(CX, CY, Rp, "0,0,0");
+      for (const deg of [-30 + wob, 30 - wob]) { ring(deg, false); g.strokeStyle = "rgba(255,255,255,.35)"; g.lineWidth = Math.max(1.4, Rp * 0.045); g.stroke(); }
+      sphere(CX, CY, Rp, "255,255,255", t / 3000);
       for (const deg of [-30 + wob, 30 - wob]) {
-        ring(deg, true); g.strokeStyle = "#fff"; g.lineWidth = Math.max(3, Rp * 0.14); g.stroke();
+        ring(deg, true); g.strokeStyle = "rgba(0,0,0,.95)"; g.lineWidth = Math.max(3, Rp * 0.14); g.stroke();
         ring(deg, true); g.strokeStyle = ringGrad; g.lineWidth = Math.max(1.8, Rp * 0.06); g.stroke();
       }
       beltDots(true);
@@ -250,6 +248,7 @@
     $("warpName").textContent = d.name; $("warpHost").textContent = d.host;
     if (reduce) return location.assign(d.url);
     $("warp").classList.add("on");
+    space.warp(3, 1400);
     const r = stage.getBoundingClientRect();
     space.shockwave(r.left + r.width / 2, r.top + r.height / 2, 1.4);
     if (SAME_TAB) setTimeout(() => location.assign(d.url), 1000);
@@ -288,19 +287,19 @@
         ${btns(ai, 0)}
       </article>
       <article class="tile docs" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb" style="background:linear-gradient(135deg,#666,#000)">DOC</span><div class="grow"><h3>${esc(docs.name)}</h3><span class="host">${esc(docs.host)}</span></div></div>
+        <div class="tile-top"><span class="orb" style="background:linear-gradient(135deg,#9a9a9a,#ffffff)">DOC</span><div class="grow"><h3>${esc(docs.name)}</h3><span class="host">${esc(docs.host)}</span></div></div>
         <p>${esc(docs.blurb)}</p>
         <ul class="feats">${docs.feats.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
         <div class="from">${docsFrom ? `from <b>${esc(docsFrom)}</b>/mo` : ""} ${chip(docs)}</div>
         ${btns(docs, 1)}
       </article>
       <article class="tile small reserved" data-tilt>
-        <div class="tile-top"><span class="orb" style="background:rgba(0,0,0,.05);box-shadow:none;border:1px dashed rgba(0,0,0,.4);color:#000">03</span><div class="grow"><h3>${esc(o3.name)}</h3><span class="host">Reserved orbit</span></div></div>
+        <div class="tile-top"><span class="orb" style="background:rgba(140,140,140,.2);box-shadow:none;border:1px dashed rgba(140,140,140,.6)">03</span><div class="grow"><h3>${esc(o3.name)}</h3><span class="host">Reserved orbit</span></div></div>
         <p class="note" style="margin-top:14px">${esc(o3.blurb)}</p>
       </article>
       <article class="tile small" data-tilt>
         <div class="big-num x09-grad">1</div>
-        <p class="note"><b style="color:#000">account, profile and bill</b> for every X09 app${anyPlan ? " — yours is active." : "."}</p>
+        <p class="note"><b style="color:#fff">account, profile and bill</b> for every X09 app${anyPlan ? " — yours is active." : "."}</p>
       </article>`;
     $("bento").querySelectorAll("[data-launch]").forEach((b) => b.addEventListener("click", () => launch(DESTINATIONS[+b.dataset.launch])));
     $("bento").querySelectorAll("[data-plans]").forEach((b) => b.addEventListener("click", () => openPlans(b.dataset.plans)));
@@ -386,6 +385,30 @@
       if (ex.code === "plan_required") { X09.toast("Ask X09 is included with any X09 plan."); setTimeout(() => X09.openAccount({ plans: "ai" }), 700); }
     } finally { a.classList.remove("cursor"); busy = false; autosize(); }
   });
+
+  /* ================= Terminal boot sequence + typed headline ================= */
+  (function bootType() {
+    const boot = $("boot"), l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
+    const t1 = l1.textContent, t2 = l2.textContent;
+    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect --account", "[ OK ] One X09 account online", "[ OK ] Stripe billing linked", "[ OK ] Claude AI engine ready"];
+    if (reduce) { boot.textContent = lines.join("\n"); return; }
+    l1.textContent = ""; l2.textContent = ""; l2.style.visibility = "hidden";
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      boot.classList.add("x09-cursor");
+      for (const line of lines) {
+        if (line.startsWith("C:")) { for (const ch of line) { boot.textContent += ch; await sleep(28); } }
+        else boot.textContent += line;
+        boot.textContent += "\n"; await sleep(line ? 120 : 60);
+      }
+      boot.classList.remove("x09-cursor");
+      l1.classList.add("x09-cursor");
+      for (const ch of t1) { l1.textContent += ch; await sleep(42); }
+      l1.classList.remove("x09-cursor"); l2.style.visibility = ""; l2.classList.add("x09-cursor");
+      for (const ch of t2) { l2.textContent += ch; await sleep(42); }
+      space.warp(1.2, 700);
+    })();
+  })();
 
   /* ================= Clock + boot ================= */
   const t0 = Date.now(), pad = (n) => String(n).padStart(2, "0");
