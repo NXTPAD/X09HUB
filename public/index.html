@@ -166,7 +166,6 @@
   }
 
   /* ================= Terminal ================= */
-  .boot { width: min(640px, 100%); min-height: 10.5em; margin: 0 auto 24px; padding: 14px 18px; text-align: left; white-space: pre-wrap; font: 500 .82rem/1.5 var(--mono); color: #cfcfcf; background: #000; border: 1px solid rgba(255,255,255,.32); box-shadow: 6px 6px 0 rgba(255,255,255,.12); }
   .hero h1 { font-size: clamp(2.2rem, 6.6vw, 5.8rem) !important; line-height: 1.02; }
   .hero h1 .l1 { color: #fff; }
   .hero h1 .l2 { display: inline-block; margin-top: .1em; padding: 0 .18em; background: #fff; color: #000 !important; text-shadow: none; filter: none; -webkit-text-fill-color: #000; }
@@ -199,10 +198,43 @@
   .links a { text-transform: uppercase; letter-spacing: .08em; font-size: .76rem !important; }
   .links a:hover { background: #fff !important; color: #000 !important; }
   .stage-hint b { color: #fff !important; }
-  @media (max-width: 600px) { .boot { font-size: .72rem; min-height: 10em; } }
+  /* ================= Entry gate: full-height command prompt ================= */
+  .gate { display: none; }
+  .gate-open .gate { position: fixed; inset: 0; z-index: 300; display: flex; justify-content: center; padding: 16px 16px 0; background: rgba(0,0,0,.55); transition: opacity .5s, transform .5s; }
+  .gate-open body { overflow: hidden; }
+  .gate.leaving { opacity: 0; transform: scale(1.04); pointer-events: none; }
+  .term { width: min(1000px, 100%); height: 100%; display: flex; flex-direction: column; background: #000; border: 1px solid #fff; border-bottom: 0; box-shadow: 8px 0 0 rgba(255,255,255,.9); }
+  .term-bar { flex-shrink: 0; display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 14px; background: #fff; color: #000; font: 700 .76rem var(--mono); letter-spacing: .02em; }
+  .term-bar [data-x09-logo] { filter: invert(1); display: inline-flex; }
+  .term-dots { letter-spacing: .5em; }
+  .term-body { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 20px 28px; font: 500 .95rem/1.6 var(--mono); color: #d6d6d6; cursor: text; }
+  .term-log { margin: 0; white-space: pre-wrap; word-break: break-word; font: inherit; }
+  .term-log b { color: #fff; font-weight: 800; }
+  .term-log .hl { background: #fff; color: #000; padding: 0 .3em; font-weight: 800; }
+  .term-log .err { color: #8f8f8f; }
+  .term-line { display: flex; align-items: baseline; gap: .6em; }
+  .term-line[hidden] { display: none; }
+  .term-ps { color: #fff; font-weight: 700; white-space: nowrap; }
+  .term-line input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: none; color: #fff; font: 700 1rem/1.6 var(--mono); caret-color: #fff; caret-shape: block; text-transform: lowercase; }
+  @media (max-width: 600px) { .gate-open .gate { padding: 10px 10px 0; } .term { box-shadow: none; } .term-body { font-size: .8rem; padding: 14px 14px 24px; } .term-line input { font-size: 16px; } }
 </style>
 </head>
 <body data-x09-bg>
+  <script>/* show the terminal gate before first paint, unless already entered this session or returning from Stripe */
+    (function () { var skip = /[?&](checkout|portal)=/.test(location.search); try { skip = skip || sessionStorage.getItem("x09-entered") === "1"; } catch (e) {}
+      document.documentElement.classList.add(skip ? "gate-done" : "gate-open"); })();</script>
+  <div class="gate" id="gate" role="dialog" aria-modal="true" aria-label="X09 command prompt">
+    <div class="term" id="term">
+      <div class="term-bar"><span data-x09-logo="16"></span><span>C:\X09\hub.exe — Command Prompt</span><span class="grow"></span><span class="term-dots" aria-hidden="true">_ □ ×</span></div>
+      <div class="term-body" id="termBody">
+        <pre class="term-log" id="termLog" aria-live="polite"></pre>
+        <form class="term-line" id="termForm" autocomplete="off" hidden>
+          <label for="termIn" class="term-ps">C:\X09&gt;</label>
+          <input id="termIn" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="go" aria-label="Type x09 and press Enter to enter" />
+        </form>
+      </div>
+    </div>
+  </div>
   <header class="navpill">
     <a class="brand" href="/" aria-label="X09 Hub"><span data-x09-logo="32"></span><span class="x09-wordmark">X09<small>Hub</small></span></a>
     <nav class="links" aria-label="Sections"><a href="#apps">Apps</a><a href="#ask">Ask X09</a><a href="#account">Account</a></nav>
@@ -214,7 +246,6 @@
 
   <main data-x09-bg>
     <section class="hero wrap" aria-labelledby="h1" data-x09-bg>
-      <pre class="boot" id="boot" aria-hidden="true"></pre>
       <span class="kicker">Launch window open · <span id="tplus">T+ 00:00</span></span>
       <h1 id="h1"><span class="l1">One account.</span><span class="l2">Every X09 app.</span></h1>
       <p class="lede">X09 AI and X09 Docs share one sign-in, one profile and one bill. Pick a world below, or grab one and fling it.</p>

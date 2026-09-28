@@ -386,28 +386,61 @@
     } finally { a.classList.remove("cursor"); busy = false; autosize(); }
   });
 
-  /* ================= Terminal boot sequence + typed headline ================= */
+  /* ================= Entry gate (full-height command prompt) + typed headline ================= */
   (function bootType() {
-    const boot = $("boot"), l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
+    const root = document.documentElement, gate = $("gate"), log = $("termLog"), form = $("termForm"), inp = $("termIn"), body = $("termBody");
+    const l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
     const t1 = l1.textContent, t2 = l2.textContent;
-    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect --account", "[ OK ] One X09 account online", "[ OK ] Stripe billing linked", "[ OK ] Claude AI engine ready"];
-    if (reduce) { boot.textContent = lines.join("\n"); return; }
-    l1.textContent = ""; l2.textContent = ""; l2.style.visibility = "hidden";
-    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-    (async () => {
-      boot.classList.add("x09-cursor");
-      for (const line of lines) {
-        if (line.startsWith("C:")) { for (const ch of line) { boot.textContent += ch; await sleep(28); } }
-        else boot.textContent += line;
-        boot.textContent += "\n"; await sleep(line ? 120 : 60);
-      }
-      boot.classList.remove("x09-cursor");
+    const sleep = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
+    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect --account", "[ OK ] One X09 account online", "[ OK ] Stripe billing linked", "[ OK ] Claude AI engine ready", ""];
+    const add = (html) => { log.insertAdjacentHTML("beforeend", html); body.scrollTop = body.scrollHeight; };
+
+    async function headline() {
+      if (reduce) return;
+      l1.textContent = ""; l2.textContent = ""; l2.style.visibility = "hidden";
       l1.classList.add("x09-cursor");
       for (const ch of t1) { l1.textContent += ch; await sleep(42); }
       l1.classList.remove("x09-cursor"); l2.style.visibility = ""; l2.classList.add("x09-cursor");
       for (const ch of t2) { l2.textContent += ch; await sleep(42); }
       space.warp(1.2, 700);
+    }
+
+    if (!root.classList.contains("gate-open")) { headline(); return; }
+
+    // Boot lines, then ask for x09
+    (async () => {
+      log.classList.add("x09-cursor");
+      for (const line of lines) {
+        if (line.startsWith("C:")) { for (const ch of line) { log.textContent += ch; await sleep(28); } }
+        else log.textContent += line;
+        log.textContent += "\n"; await sleep(line ? 120 : 60);
+      }
+      log.classList.remove("x09-cursor");
+      add(`Welcome to <b>X09</b>.\nType <span class="hl">x09</span> and press Enter to enter.${matchMedia("(pointer: coarse)").matches ? "\n(Tap here to type.)" : ""}\n\n`);
+      form.hidden = false; inp.focus();
     })();
+
+    body.addEventListener("click", () => { if (!form.hidden && !getSelection().toString()) inp.focus(); });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const v = inp.value.trim();
+      inp.value = "";
+      add(`<b>C:\\X09&gt;</b> ${esc(v)}\n`);
+      if (v.toLowerCase() !== "x09") {
+        add(v ? `<span class="err">'${esc(v)}' is not recognized as a command.</span>\nType <span class="hl">x09</span> to enter.\n\n`
+              : `Type <span class="hl">x09</span> to enter.\n\n`);
+        return;
+      }
+      form.hidden = true;
+      add(`[ OK ] Access granted\nEntering X09 Hub…\n`);
+      try { sessionStorage.setItem("x09-entered", "1"); } catch {}
+      space.warp(1.6, 900);
+      await sleep(550);
+      gate.classList.add("leaving");
+      await sleep(500);
+      root.classList.replace("gate-open", "gate-done");
+      headline();
+    });
   })();
 
   /* ================= Clock + boot ================= */
