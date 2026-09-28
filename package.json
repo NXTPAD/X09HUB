@@ -1,0 +1,13 @@
+{
+  "name": "x09-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "X09 Hub - the starting point for every X09 destination (Cloudflare Workers static site).",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
