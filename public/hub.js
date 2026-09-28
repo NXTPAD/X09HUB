@@ -392,7 +392,7 @@
     const l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
     const t1 = l1.textContent, t2 = l2.textContent;
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
-    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect --account", "[ OK ] One X09 account online", "[ OK ] Stripe billing linked", "[ OK ] Claude AI engine ready", ""];
+    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect", "-verifying", "-transponding", "-Sending information through cables", "-Syncing your X09 account", "-Linking Stripe billing", "-Waking the Claude AI engine", "-Opening the launch window", ""];
     const add = (html) => { log.insertAdjacentHTML("beforeend", html); body.scrollTop = body.scrollHeight; };
 
     async function headline() {
@@ -413,7 +413,7 @@
       for (const line of lines) {
         if (line.startsWith("C:")) { for (const ch of line) { log.textContent += ch; await sleep(28); } }
         else log.textContent += line;
-        log.textContent += "\n"; await sleep(line ? 120 : 60);
+        log.textContent += "\n"; await sleep(line.startsWith("-") ? 380 : line ? 120 : 60);
       }
       log.classList.remove("x09-cursor");
       add(`Welcome to <b>X09</b>.\nType <span class="hl">x09</span> and press Enter to enter.${matchMedia("(pointer: coarse)").matches ? "\n(Tap here to type.)" : ""}\n\n`);
