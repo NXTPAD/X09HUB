@@ -122,6 +122,8 @@
   .me-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .me .row-btns { margin-top: 0; }
   .me .row-btns .btn-primary, .me .row-btns .btn-ghost { width: auto; padding: 0 22px; flex: none; }
+  .me .row-btns { flex-wrap: wrap; width: 100%; }
+  @media (max-width: 560px) { .me .row-btns .btn-primary, .me .row-btns .btn-ghost { flex: 1 1 auto; min-width: 0; padding: 0 12px; } }
   .feat { grid-column: span 2; }
   .feat-ico { width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35); color: #e6e6e6; position: relative; z-index: 1; }
   .feat h3 { position: relative; z-index: 1; margin: 18px 0 6px; font: 600 1.1rem var(--display); letter-spacing: -.02em; }
@@ -271,6 +273,21 @@
 
     </section>
 
+    <section class="block wrap" id="x09id" aria-label="Your X09 ID">
+      <div class="bento">
+        <div class="tile me" id="meCard" hidden data-x09-solid>
+          <div class="x09-avatar me-av" id="meAv"></div>
+          <div class="me-id"><b id="meName"></b><span id="meEmail"></span><div class="me-chips" id="meChips"></div></div>
+          <div class="row-btns"><button class="btn-primary" id="meOpen">Account &amp; plans</button><button class="btn-ghost" id="meBilling">Billing</button></div>
+        </div>
+        <div class="tile me" id="guestCard" data-x09-solid>
+          <div class="x09-avatar me-av has-logo"><img src="/x09/logo.svg" alt="" /></div>
+          <div class="me-id"><b>Create your X09 ID</b><span>One account for every X09 app. Plans start at $9/mo.</span></div>
+          <div class="row-btns"><button class="btn-primary" id="guestSignup">Create account</button><button class="btn-ghost" id="guestLogin">Sign in</button></div>
+        </div>
+      </div>
+    </section>
+
     <section class="block wrap" id="apps" aria-label="The X09 apps">
       <div class="bento" id="bento"></div>
     </section>
@@ -299,16 +316,6 @@
     <section class="block wrap" id="account" aria-labelledby="idTitle">
       <div class="sec-head"><span class="kicker">X09 ID</span><h2 id="idTitle">Sign in once. You're in everywhere.</h2><p>Your profile, photo and plans follow you across x09hub.com, ai.x09hub.com and docs.x09hub.com.</p></div>
       <div class="bento">
-        <div class="tile me" id="meCard" hidden data-x09-solid>
-          <div class="x09-avatar me-av" id="meAv"></div>
-          <div class="me-id"><b id="meName"></b><span id="meEmail"></span><div class="me-chips" id="meChips"></div></div>
-          <div class="row-btns"><button class="btn-primary" id="meOpen">Account &amp; plans</button><button class="btn-ghost" id="meBilling">Billing</button></div>
-        </div>
-        <div class="tile me" id="guestCard" data-x09-solid>
-          <div class="x09-avatar me-av has-logo"><img src="/x09/logo.svg" alt="" /></div>
-          <div class="me-id"><b>Create your X09 ID</b><span>One account for every X09 app. Plans start at $9/mo.</span></div>
-          <div class="row-btns"><button class="btn-primary" id="guestSignup">Create account</button><button class="btn-ghost" id="guestLogin">Sign in</button></div>
-        </div>
         <div class="tile feat" data-tilt>
           <div class="feat-ico has-img"><img src="/x09/icon-signin.svg" alt="" /></div>
           <h3>One sign-in</h3><p>Sign in on the Hub and you're already in X09 AI and X09 Docs. Sign out once, and you're out everywhere.</p>
