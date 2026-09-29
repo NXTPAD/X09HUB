@@ -32,3 +32,8 @@ x09hub.com and www.x09hub.com stay attached through the `routes` in `wrangler.js
 
 ## Local testing
 `npm test` runs the checks. `npm run test:server` runs the Hub at http://localhost:8787 with mock AI and mock Stripe.
+
+
+### X09 Defense
+
+X09 Defense, the cyber defense toolkit, is served by the Hub at **x09hub.com/defense** (`public/defense/index.html`). It runs entirely in the browser and uses the shared `/x09/` fonts, physics and logo (`/x09/logo-defense.svg`). It appears in the Hub orbit map, the app cards, the footer, Ask X09 and the X09 app switcher.
