@@ -54,7 +54,7 @@ a{color:inherit}
 .x09-switch-item{display:flex;align-items:center;gap:12px;padding:10px;color:var(--ink);text-decoration:none}
 .x09-switch-item:hover{background:#0c0c0c}
 .x09-switch-item.here{background:#111;outline:1px solid var(--hair-2)}
-.x09-switch-orb{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.45);font:800 .62rem var(--mono)}
+.x09-switch-orb{width:38px;height:38px;flex-shrink:0;display:grid;place-items:center;border:1px solid rgba(255,255,255,.45)}.x09-switch-orb img{display:block;width:30px;height:30px}
 .x09-switch-item b{display:block;font-weight:700;font-size:.92rem}
 .x09-switch-item span span{display:block;font-size:.76rem;color:var(--muted)}
 .x09-chip{margin-left:auto;padding:3px 8px;border:1px solid var(--hair-2);font:700 .62rem var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
@@ -219,10 +219,10 @@ tr:last-child td{border-bottom:0}
         <button class="x09-switch-btn" id="swBtn" aria-haspopup="true" aria-expanded="false" aria-label="X09 apps"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
         <div class="x09-switch-menu" id="swMenu" role="menu" hidden>
           <div class="x09-switch-head">X09 apps · one account</div>
-          <a class="x09-switch-item" href="/"><span class="x09-switch-orb">HUB</span><span><b>X09 Hub</b><span>Start here · Ask X09</span></span></a>
-          <a class="x09-switch-item" href="https://ai.x09hub.com"><span class="x09-switch-orb">AI</span><span><b>X09 AI</b><span>Chat with Claude</span></span></a>
-          <a class="x09-switch-item" href="https://docs.x09hub.com"><span class="x09-switch-orb">DOC</span><span><b>X09 Docs</b><span>Invoices, estimates, contracts</span></span></a>
-          <a class="x09-switch-item here" href="#console"><span class="x09-switch-orb">DEF</span><span><b>X09 Defense</b><span>Cyber defense toolkit</span></span><span class="x09-chip on">Here</span></a>
+          <a class="x09-switch-item" href="/"><span class="x09-switch-orb"><img src="/x09/logo.svg" alt="" width="30" height="30"></span><span><b>X09 Hub</b><span>Start here · Ask X09</span></span></a>
+          <a class="x09-switch-item" href="https://ai.x09hub.com"><span class="x09-switch-orb"><img src="/x09/logo-ai.svg" alt="" width="30" height="30"></span><span><b>X09 AI</b><span>Chat with Claude</span></span></a>
+          <a class="x09-switch-item" href="https://docs.x09hub.com"><span class="x09-switch-orb"><img src="/x09/logo-docs.svg" alt="" width="30" height="30"></span><span><b>X09 Docs</b><span>Invoices, estimates, contracts</span></span></a>
+          <a class="x09-switch-item here" href="#console"><span class="x09-switch-orb"><img src="/x09/logo-defense.svg" alt="" width="30" height="30"></span><span><b>X09 Defense</b><span>Cyber defense toolkit</span></span><span class="x09-chip on">Here</span></a>
         </div>
       </div>
     </div>
@@ -967,7 +967,7 @@ addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&&id!==c
 go(location.hash.slice(1)||'console');
 
 /* X09 Space physics, animated logo, clock, app switcher */
-X09Space.start({density:.8,solids:'[data-x09-solid],.topbar,.rail,.verdict,.console-box'});
+X09Space.start({density:.8,bodies:false});
 X09Space.logo($('#topLogo'),30);
 $('#toolCount').textContent=(TOOLS.length-1)+' tools · runs on-device';
 (function clk(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString('en-US',{hour12:false});setTimeout(clk,1000-d.getMilliseconds())})();
