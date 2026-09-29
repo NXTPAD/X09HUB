@@ -19,6 +19,11 @@
     { id: "dex", orb: "DEX", logo: "/x09/logo-dex.svg", name: "X09 DEX", host: "dex.x09hub.com", url: "https://dex.x09hub.com", live: true, hue: "220,220,220",
       blurb: "Swap any token on Solana and 8 EVM chains, explore trending coins and launch your own token with anti-sniper protection. Non-custodial — you sign everything in your own wallet.",
       feats: ["Solana + 8 EVM chains", "Best-price routing", "Token launcher", "Anti-sniper"] },
+    // Not charted yet — shown as dashed outlines until the next X09 apps launch
+    { id: "undiscovered-1", orb: "?", name: "Undiscovered", host: "coordinates unknown", live: false, chip: "Undiscovered", hue: "150,150,150",
+      blurb: "An uncharted world in the X09 system. Something is being built out here — check back soon." },
+    { id: "undiscovered-2", orb: "?", name: "Undiscovered", host: "coordinates unknown", live: false, chip: "Undiscovered", hue: "150,150,150",
+      blurb: "Another world no one has landed on yet. The next X09 app is on its way." },
   ];
   const SAME_TAB = true;
 
@@ -48,13 +53,13 @@
     CX = W / 2; CY = H * 0.5;
     U = Math.min(W / 2 - 10, (H / 2 - 30) / TILT);           // plane radius that fits the stage
     Rp = Math.min(H * 0.2, U * 0.2);
-    const homes = [0.46, 0.62, 0.78, 0.94], radii = [0.07, 0.06, 0.045, 0.035];
+    const homes = [0.46, 0.62, 0.78, 0.94, 0.7, 0.86], radii = [0.07, 0.06, 0.045, 0.035, 0.032, 0.028];
     GM = Math.pow((TAU * homes[0] * U) / 20, 2) * homes[0] * U;  // inner world: one orbit ≈ 20 s
     worlds.forEach((w, k) => {
       const first = !w.home;
       w.home = homes[k] * U; w.r = Math.max(8, Math.min(radii[k] * U, Rp * 0.42));
       if (first) {
-        const a = [0.9, 3.4, 5.2, 2.1][k];
+        const a = [0.9, 3.4, 5.2, 2.1, 4.4, 0.1][k];
         w.x = Math.cos(a) * w.home; w.y = Math.sin(a) * w.home;
         const v = Math.sqrt(GM / w.home);
         w.vx = -Math.sin(a) * v; w.vy = Math.cos(a) * v;
@@ -239,7 +244,7 @@
     selected = i;
     const d = DESTINATIONS[i], mine = planOf(d);
     $("sOrb").innerHTML = orbInner(d); $("sOrb").classList.toggle("has-logo", !!d.logo); $("sName").textContent = d.name; $("sHost").textContent = d.host; $("sBlurb").textContent = d.blurb;
-    $("sChip").textContent = !d.live ? "Reserved" : mine?.plan ? mine.planName : "Live";
+    $("sChip").textContent = !d.live ? d.chip || "Reserved" : mine?.plan ? mine.planName : "Live";
     $("sChip").classList.toggle("on", d.live);
     const L = $("sLaunch");
     L.href = d.url || "#"; L.textContent = d.live ? `Launch ${d.name}` : "Coming soon"; L.style.opacity = d.live ? "" : ".4";
