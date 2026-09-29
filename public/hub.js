@@ -7,10 +7,10 @@
      `product` links a destination to its plans in the shared X09 catalog.
      ------------------------------------------------------------------ */
   const DESTINATIONS = [
-    { id: "ai", product: "ai", orb: "AI", name: "X09 AI", host: "ai.x09hub.com", url: "https://ai.x09hub.com", live: true, hue: "255,255,255",
+    { id: "ai", product: "ai", orb: "AI", logo: "/x09/logo-ai.svg", name: "X09 AI", host: "ai.x09hub.com", url: "https://ai.x09hub.com", live: true, hue: "255,255,255",
       blurb: "Your AI co-pilot. Ask anything, plan, write, code and analyze. Fast mode runs on Claude Haiku, Deep mode on Claude Sonnet.",
       feats: ["Claude Haiku + Sonnet", "Fast & Deep modes", "Chats synced to your account", "Code, plans, emails"] },
-    { id: "docs", product: "docs", orb: "DOC", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "200,200,200",
+    { id: "docs", product: "docs", orb: "DOC", logo: "/x09/logo-docs.svg", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "200,200,200",
       blurb: "AI invoices, estimates, proposals and contracts. Describe the job and X09 drafts it. Clients view, download and e-sign.",
       feats: ["AI drafts", "E-signature", "PDF + client links", "Estimate → invoice"] },
     { id: "o3", orb: "03", name: "Orbit 03", host: "Reserved", url: null, live: false, hue: "140,140,140",
@@ -19,6 +19,7 @@
   const SAME_TAB = true;
 
   const $ = (id) => document.getElementById(id);
+  const orbInner = (d) => d.logo ? `<img src="${d.logo}" alt="" />` : d.orb;
   const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const TAU = Math.PI * 2;
@@ -233,7 +234,7 @@
   function select(i) {
     selected = i;
     const d = DESTINATIONS[i], mine = planOf(d);
-    $("sOrb").textContent = d.orb; $("sName").textContent = d.name; $("sHost").textContent = d.host; $("sBlurb").textContent = d.blurb;
+    $("sOrb").innerHTML = orbInner(d); $("sOrb").classList.toggle("has-logo", !!d.logo); $("sName").textContent = d.name; $("sHost").textContent = d.host; $("sBlurb").textContent = d.blurb;
     $("sChip").textContent = !d.live ? "Reserved" : mine?.plan ? mine.planName : "Live";
     $("sChip").classList.toggle("on", d.live);
     const L = $("sLaunch");
@@ -280,14 +281,14 @@
     const anyPlan = X09.user && Object.values(X09.user.products || {}).some((p) => p.plan);
     $("bento").innerHTML = `
       <article class="tile hero-tile" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb">AI</span><div class="grow"><h3>${esc(ai.name)}</h3><span class="host">${esc(ai.host)}</span></div>${chip(ai)}</div>
+        <div class="tile-top"><span class="orb has-logo">${orbInner(ai)}</span><div class="grow"><h3>${esc(ai.name)}</h3><span class="host">${esc(ai.host)}</span></div>${chip(ai)}</div>
         <p>${esc(ai.blurb)}</p>
         <ul class="feats">${ai.feats.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
         ${aiPlans ? `<div class="plan-row">${aiPlans}</div>` : ""}
         ${btns(ai, 0)}
       </article>
       <article class="tile docs" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb" style="background:linear-gradient(135deg,#9a9a9a,#ffffff)">DOC</span><div class="grow"><h3>${esc(docs.name)}</h3><span class="host">${esc(docs.host)}</span></div></div>
+        <div class="tile-top"><span class="orb has-logo">${orbInner(docs)}</span><div class="grow"><h3>${esc(docs.name)}</h3><span class="host">${esc(docs.host)}</span></div></div>
         <p>${esc(docs.blurb)}</p>
         <ul class="feats">${docs.feats.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
         <div class="from">${docsFrom ? `from <b>${esc(docsFrom)}</b>/mo` : ""} ${chip(docs)}</div>
