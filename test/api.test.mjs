@@ -44,7 +44,7 @@ try {
 
   res = await api("/defense/", { raw: true });
   let html = await res.text();
-  assert.match(html, /X09 Defense — plans/); assert.doesNotMatch(html, /<script id="core">/); assert.match(res.headers.get("cache-control"), /no-store/);
+  assert.match(html, /X09 Defense — Browser Cyber Security Toolkit/); assert.doesNotMatch(html, /<script id="core">/); assert.match(res.headers.get("cache-control"), /no-store/);
   ok("signed-out visitors get the Defense plans page, not the toolkit");
 
   r = await api("/api/guide", { method: "POST", body: { messages: [{ role: "user", content: "hi" }] } });
@@ -94,7 +94,7 @@ try {
   r = await api("/api/guide", { method: "POST", body: { messages: [{ role: "assistant", content: "hello" }] } });
   assert.equal(r.status, 400); ok("guide needs a question");
 
-  res = await api("/defense/", { raw: true }); assert.match(await res.text(), /X09 Defense — plans/); ok("a Docs plan doesn't unlock X09 Defense");
+  res = await api("/defense/", { raw: true }); assert.match(await res.text(), /X09 Defense — Browser Cyber Security Toolkit/); ok("a Docs plan doesn't unlock X09 Defense");
   r = await api("/api/billing/checkout", { method: "POST", body: { product: "defense", plan: "guard" } });
   assert.equal(r.status, 200);
   const dcs = stripeCalls.filter((c) => c.path === "/checkout/sessions").pop();
