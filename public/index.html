@@ -198,6 +198,9 @@
   .links a { text-transform: uppercase; letter-spacing: .08em; font-size: .76rem !important; }
   .links a:hover { background: #fff !important; color: #000 !important; }
   .stage-hint b { color: #fff !important; }
+  /* logo-style images on the feature cards */
+  .feat-ico.has-img { width: 84px; height: 84px; background: #000 !important; border: 1px solid rgba(255,255,255,.45) !important; }
+  .feat-ico.has-img img { width: 64px; height: 64px; display: block; }
   /* app logos inside card tiles */
   .orb.has-logo, .me-av.has-logo { background: #000 !important; color: #fff !important; border: 1px solid rgba(255,255,255,.45) !important; overflow: hidden; }
   .orb.has-logo img { width: 78%; height: 78%; display: block; }
@@ -313,15 +316,15 @@
           <div class="row-btns"><button class="btn-primary" id="guestSignup">Create account</button><button class="btn-ghost" id="guestLogin">Sign in</button></div>
         </div>
         <div class="tile feat" data-tilt>
-          <div class="feat-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.7"/><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <div class="feat-ico has-img"><img src="/x09/icon-signin.svg" alt="" /></div>
           <h3>One sign-in</h3><p>Sign in on the Hub and you're already in X09 AI and X09 Docs. Sign out once, and you're out everywhere.</p>
         </div>
         <div class="tile feat" data-tilt>
-          <div class="feat-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"><rect x="4" y="4" width="16" height="16" rx="4" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="11" r="3" stroke="currentColor" stroke-width="1.7"/><path d="M7 18c1.2-2 3-3 5-3s3.8 1 5 3" stroke="currentColor" stroke-width="1.7"/></svg></div>
+          <div class="feat-ico has-img"><img src="/x09/icon-profile.svg" alt="" /></div>
           <h3>One profile</h3><p>Your name, company and photo live in one place and show up in every app.</p>
         </div>
         <div class="tile feat" data-tilt>
-          <div class="feat-ico"><svg viewBox="0 0 24 24" width="20" height="20" fill="none"><rect x="3" y="6" width="18" height="13" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M3 10h18M7 15h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+          <div class="feat-ico has-img"><img src="/x09/icon-bill.svg" alt="" /></div>
           <h3>One bill</h3><p>Every plan is on one Stripe billing account. Upgrade, switch or cancel any app's plan in one place.</p>
         </div>
       </div>
