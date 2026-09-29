@@ -16,6 +16,9 @@
     { id: "defense", product: "defense", orb: "DEF", logo: "/x09/logo-defense.svg", name: "X09 Defense", host: "x09hub.com/defense", url: "https://x09hub.com/defense/", live: true, hue: "170,170,170",
       blurb: "A cyber defense toolkit. Scan phishing links, analyze email headers and logs, inspect tokens, audit passwords and security headers. Everything runs in your browser.",
       feats: ["17 defense tools", "Phishing + log hunting", "Runs on-device", "Incident playbook"] },
+    { id: "dex", orb: "DEX", logo: "/x09/logo-dex.svg", name: "X09 DEX", host: "dex.x09hub.com", url: "https://dex.x09hub.com", live: true, hue: "220,220,220",
+      blurb: "Swap any token on Solana and 8 EVM chains, explore trending coins and launch your own token with anti-sniper protection. Non-custodial — you sign everything in your own wallet.",
+      feats: ["Solana + 8 EVM chains", "Best-price routing", "Token launcher", "Anti-sniper"] },
   ];
   const SAME_TAB = true;
 
@@ -45,13 +48,13 @@
     CX = W / 2; CY = H * 0.5;
     U = Math.min(W / 2 - 10, (H / 2 - 30) / TILT);           // plane radius that fits the stage
     Rp = Math.min(H * 0.2, U * 0.2);
-    const homes = [0.5, 0.72, 0.9], radii = [0.07, 0.06, 0.03];
+    const homes = [0.46, 0.62, 0.78, 0.94], radii = [0.07, 0.06, 0.045, 0.035];
     GM = Math.pow((TAU * homes[0] * U) / 20, 2) * homes[0] * U;  // inner world: one orbit ≈ 20 s
     worlds.forEach((w, k) => {
       const first = !w.home;
       w.home = homes[k] * U; w.r = Math.max(8, Math.min(radii[k] * U, Rp * 0.42));
       if (first) {
-        const a = [0.9, 3.4, 5.2][k];
+        const a = [0.9, 3.4, 5.2, 2.1][k];
         w.x = Math.cos(a) * w.home; w.y = Math.sin(a) * w.home;
         const v = Math.sqrt(GM / w.home);
         w.vx = -Math.sin(a) * v; w.vy = Math.cos(a) * v;
@@ -240,7 +243,7 @@
     $("sChip").classList.toggle("on", d.live);
     const L = $("sLaunch");
     L.href = d.url || "#"; L.textContent = d.live ? `Launch ${d.name}` : "Coming soon"; L.style.opacity = d.live ? "" : ".4";
-    const P = $("sPlans"); P.hidden = !d.live || !d.product;
+    const P = $("sPlans"); P.hidden = !d.live || !d.product; P.style.display = P.hidden ? "none" : "";
     const from = plansFor(d)[0]?.price;
     P.textContent = mine?.plan ? "Your plan" : from ? `From ${from}/mo` : "Plans";
     worlds[i].glow = 1;
