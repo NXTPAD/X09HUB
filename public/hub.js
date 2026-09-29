@@ -392,7 +392,6 @@
     const l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
     const t1 = l1.textContent, t2 = l2.textContent;
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
-    const lines = ["X09 OS [Version 26.9]", "(c) X09. All systems nominal.", "", "C:\\X09> connect", "-verifying", "-transponding", "-Sending information through cables", "-Syncing your X09 account", "-Linking Stripe billing", "-Waking the Claude AI engine", "-Opening the launch window", ""];
     const add = (html) => { log.insertAdjacentHTML("beforeend", html); body.scrollTop = body.scrollHeight; };
 
     async function headline() {
@@ -407,16 +406,50 @@
 
     if (!root.classList.contains("gate-open")) { headline(); return; }
 
-    // Boot lines, then ask for x09
+    // Boot sequence with mock connect / transmit / verify / prepare steps, then ask for X09
+    const txt = (t) => { log.append(t); body.scrollTop = body.scrollHeight; };
+    const live = () => { const el = document.createElement("span"); log.append(el); return el; };
+    const typeOut = async (t, ms = 30) => { for (const ch of t) { txt(ch); await sleep(ms); } };
+    const SPIN = "|/-\\", narrow = innerWidth < 560;
+    async function spin(label, ms, result = "OK") {
+      txt("  " + label + " "); const el = live();
+      for (let i = 0; i < ms / 90; i++) { el.textContent = "[" + SPIN[i % 4] + "]"; await sleep(90); }
+      el.innerHTML = `[ <b>${result}</b> ]`; txt("\n");
+    }
+    async function bar(label, ms, totalMB) {
+      txt("  " + label + "\n  "); const el = live(); const W = narrow ? 12 : 24, steps = Math.round(ms / 60);
+      for (let i = 0; i <= steps; i++) {
+        const f = Math.min(1, (i / steps) ** 0.8 + (i < steps ? Math.random() * 0.02 : 0)), n = Math.round(f * W);
+        el.textContent = `[${"#".repeat(n)}${".".repeat(W - n)}] ${String(Math.round(f * 100)).padStart(3)}%${narrow ? "" : `  ${(f * totalMB).toFixed(1)} / ${totalMB.toFixed(1)} MB`}`;
+        await sleep(60);
+      }
+      txt("\n");
+    }
     (async () => {
       log.classList.add("x09-cursor");
-      for (const line of lines) {
-        if (line.startsWith("C:")) { for (const ch of line) { log.textContent += ch; await sleep(28); } }
-        else log.textContent += line;
-        log.textContent += "\n"; await sleep(line.startsWith("-") ? 380 : line ? 120 : 60);
-      }
+      txt("X09 OS [Version 26.9]\n"); await sleep(120);
+      txt("(c) X09. All systems online.\n\n"); await sleep(300);
+      txt("C:\\X09> "); await typeOut("connecting to x09 cloud"); txt("\n"); await sleep(250);
+      txt("  Resolving cloud.x09hub.com ..."); await sleep(500); txt((narrow ? "\n  " : " ") + "104.21.9.9\n");
+      for (let i = 0; i < 3; i++) { await sleep(320); txt(`  Reply from x09 cloud: ${narrow ? "" : "bytes=64 "}time=${8 + Math.floor(Math.random() * 14)}ms${narrow ? "" : " TTL=57"}\n`); }
+      await spin("Opening secure channel", 700, "CONNECTED");
+      txt("\n-transmitting data\n"); await sleep(200);
+      await bar("Uploading handshake packets", 1300, 2.6);
+      await bar("Downloading X09 manifest", 1100, 4.1);
+      txt("\n-verifying connection\n"); await sleep(200);
+      await spin("Checking certificate ......", 600);
+      await spin("Checking encryption (TLS 1.3)", 600);
+      await spin("Checking X09 account service", 600);
+      await spin("Checking packet integrity ..", 500);
+      txt("-Verification complete\n"); await sleep(300);
+      txt("-Preparing site\n"); await sleep(200);
+      await spin("Loading orbit map .....", 450, "DONE");
+      await spin("Loading X09 apps ......", 450, "DONE");
+      await spin("Starting star field ...", 450, "DONE");
+      await bar("Rendering", 900, 1.8);
+      txt("\n");
       log.classList.remove("x09-cursor");
-      add(`Welcome to <b>X09</b>.\nType <span class="hl">x09</span> and press Enter to enter.${matchMedia("(pointer: coarse)").matches ? "\n(Tap here to type.)" : ""}\n\n`);
+      add(`Welcome to <b>X09</b>.\nType <span class="hl">X09</span> to ENTER${matchMedia("(pointer: coarse)").matches ? "\n(Tap here to type.)" : ""}\n\n`);
       form.hidden = false; inp.focus();
     })();
 
@@ -427,8 +460,7 @@
       inp.value = "";
       add(`<b>C:\\X09&gt;</b> ${esc(v)}\n`);
       if (v.toLowerCase() !== "x09") {
-        add(v ? `<span class="err">'${esc(v)}' is not recognized as a command.</span>\nType <span class="hl">x09</span> to enter.\n\n`
-              : `Type <span class="hl">x09</span> to enter.\n\n`);
+        add((v ? `<span class="err">'${esc(v)}' is not recognized as a command.</span>\n` : "") + `Type <span class="hl">X09</span> to ENTER\n\n`);
         return;
       }
       form.hidden = true;

@@ -215,7 +215,7 @@
   .term-line { display: flex; align-items: baseline; gap: .6em; }
   .term-line[hidden] { display: none; }
   .term-ps { color: #fff; font-weight: 700; white-space: nowrap; }
-  .term-line input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: none; color: #fff; font: 700 1rem/1.6 var(--mono); caret-color: #fff; caret-shape: block; text-transform: lowercase; }
+  .term-line input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: none; color: #fff; font: 700 1rem/1.6 var(--mono); caret-color: #fff; caret-shape: block; }
   @media (max-width: 600px) { .gate-open .gate { padding: 10px 10px 0; } .term { box-shadow: none; } .term-body { font-size: .8rem; padding: 14px 14px 24px; } .term-line input { font-size: 16px; } }
 </style>
 </head>
@@ -230,7 +230,7 @@
         <pre class="term-log" id="termLog" aria-live="polite"></pre>
         <form class="term-line" id="termForm" autocomplete="off" hidden>
           <label for="termIn" class="term-ps">C:\X09&gt;</label>
-          <input id="termIn" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="go" aria-label="Type x09 and press Enter to enter" />
+          <input id="termIn" type="text" spellcheck="false" autocapitalize="off" autocorrect="off" enterkeyhint="go" aria-label="Type X09 to enter" />
         </form>
       </div>
     </div>
