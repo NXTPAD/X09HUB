@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="5 3 56 56" fill="none">
   <defs>
     <radialGradient id="x09kp" cx="34%" cy="30%" r="78%">
       <stop offset="0" stop-color="#ffffff"/><stop offset=".38" stop-color="#e2e2e2"/><stop offset=".72" stop-color="#6b6b6b"/><stop offset="1" stop-color="#161616"/>
@@ -6,17 +6,11 @@
     <linearGradient id="x09ks" x1="30" y1="30" x2="56" y2="56" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#7a7a7a"/>
     </linearGradient>
-    <clipPath id="x09kf"><rect x="-30" y="0" width="60" height="30" transform="translate(24 24) rotate(-30)"/></clipPath>
   </defs>
   <g stroke-linecap="round" stroke-linejoin="round">
-    <ellipse cx="24" cy="24" rx="21" ry="6.4" transform="rotate(-30 24 24)" stroke="#fff" stroke-opacity=".55" stroke-width="2.1"/>
     <path d="M31 31L55 55M47 47L52 42M52 52L57 47" stroke="url(#x09ks)" stroke-width="4.6"/>
     <circle cx="24" cy="24" r="12" fill="url(#x09kp)"/>
     <circle cx="20.5" cy="20.5" r="3.4" fill="#000"/>
-    <g clip-path="url(#x09kf)">
-      <ellipse cx="24" cy="24" rx="21" ry="6.4" transform="rotate(-30 24 24)" stroke="#000" stroke-width="5.5"/>
-      <ellipse cx="24" cy="24" rx="21" ry="6.4" transform="rotate(-30 24 24)" stroke="#fff" stroke-width="2.3"/>
-    </g>
     <circle cx="44" cy="7" r="2.6" fill="#fff"/>
   </g>
 </svg>
