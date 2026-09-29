@@ -107,12 +107,12 @@ function productState(user, product, usage) {
   const limits = d ? d.limits : {};
   const meters = product === "ai"
     ? { fast: usage.fast, deep: usage.deep, fastLimit: limits.fast || 0, deepLimit: limits.deep || 0 }
-    : { docs: usage.docs, docsLimit: limits.docs || 0 };
+    : product === "docs" ? { docs: usage.docs, docsLimit: limits.docs || 0 } : {};
   return {
     name: PRODUCTS[product].name, url: PRODUCTS[product].url,
     plan: key, planName: d ? d.name : null, price: d ? d.price : null,
     status: s?.status || null, renewsAt: s?.current_period_end || null,
-    whiteLabel: !!d?.whiteLabel, usage: meters,
+    whiteLabel: !!d?.whiteLabel, usage: meters, tools: d?.tools || null,
   };
 }
 

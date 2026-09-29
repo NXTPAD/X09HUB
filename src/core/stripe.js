@@ -103,7 +103,10 @@ export async function checkout(request, env) {
   if (activePlan(user, product) && user.subs[product]?.stripe_subscription_id) return portal(request, env, user);
 
   const customer = await ensureCustomer(env, user);
-  const back = `${origin(request)}/?checkout=success&product=${product}`;
+  // Return to the product's own page when it lives on this site (e.g. x09hub.com/defense/), else this site's home
+  const home = new URL(PRODUCTS[product].url);
+  const base = home.host === new URL(request.url).host ? home.origin + home.pathname : `${origin(request)}/`;
+  const back = `${base}?checkout=success&product=${product}`;
   const session = await stripe(env, "POST", "/checkout/sessions", {
     mode: "subscription",
     customer,
@@ -112,7 +115,7 @@ export async function checkout(request, env) {
     allow_promotion_codes: "true",
     subscription_data: { metadata: { user_id: user.id, product, plan: key, app: `x09-${product}` } },
     success_url: back,
-    cancel_url: `${origin(request)}/?checkout=cancel`,
+    cancel_url: `${base}?checkout=cancel`,
   });
   return json({ url: session.url });
 }

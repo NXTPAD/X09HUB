@@ -78,6 +78,11 @@ nav{display:flex;flex-direction:column;gap:12px;padding:10px 8px 14px;flex:1}
 .nav-a:hover{color:#fff;background:#0c0c0c}
 .nav-a[aria-current="page"]{color:#000;background:#fff;font-weight:700}
 .nav-a .gl{width:14px;text-align:center}
+.nav-a.locked{color:var(--dim)}.nav-a .lk,.tool-card .lk{margin-left:auto;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--hair);padding:1px 6px;color:var(--dim)}
+.tool-card.locked{opacity:.55}
+.plan-btn{width:auto!important;padding:0 11px;font:700 .66rem var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.upsell{display:flex;flex-direction:column;align-items:flex-start;gap:14px;max-width:620px}
+.upsell .lock{font:800 2.4rem/1 var(--mono)}
 .rail-foot{padding:10px 16px 0;border-top:1px solid var(--hair);font-size:.68rem;color:var(--dim);display:flex;flex-direction:column;gap:3px}
 
 /* main */
@@ -215,6 +220,7 @@ tr:last-child td{border-bottom:0}
     <div class="hud">
       <span class="hud-clock" id="clock"></span>
       <span class="local" title="All analysis runs in your browser"><i></i>on-device</span>
+      <button class="x09-switch-btn plan-btn" id="planBtn" type="button" hidden title="Your X09 Defense plan"></button>
       <div class="x09-switch">
         <button class="x09-switch-btn" id="swBtn" aria-haspopup="true" aria-expanded="false" aria-label="X09 apps"><svg viewBox="0 0 24 24" width="17" height="17"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke="currentColor" stroke-width="1.6" fill="none"/></svg></button>
         <div class="x09-switch-menu" id="swMenu" role="menu" hidden>
@@ -474,8 +480,8 @@ T({id:'console',cat:'Home',gl:'◎',name:'Defense Console',desc:'Paste anything 
       <div class="row"><button class="btn" id="tri-go" data-magnet>Analyze</button><span class="muted small" id="tri-hint">X09 Defense detects what you pasted and opens the matching tool.</span></div>
       <div class="chips" id="tri-ex"></div>
     </div>
-    <div class="stat"><div><b>${TOOLS.length-1}</b>defense tools</div><div><b>0 bytes</b>sent to a server</div><div><b>100%</b>in-browser crypto</div></div>
-    ${groups.map(g=>`<section><h3>${g}</h3><div class="g3">${TOOLS.filter(t=>t.cat===g).map(t=>`<a class="tool-card" href="#${t.id}" data-tilt><span class="gl">${t.gl}</span><b>${t.name}</b><span>${t.desc}</span></a>`).join('')}</div></section>`).join('')}
+    <div class="stat"><div><b>${ALLOWED?[...ALLOWED].filter(x=>x!=='console').length+' / ':''}${TOOLS.length-1}</b>defense tools</div><div><b>0 bytes</b>sent to a server</div><div><b>100%</b>in-browser crypto</div></div>
+    ${groups.map(g=>`<section><h3>${g}</h3><div class="g3">${TOOLS.filter(t=>t.cat===g).map(t=>`<a class="tool-card${locked(t.id)?' locked':''}" href="#${t.id}" data-tilt><span class="gl">${t.gl}</span><b>${t.name}</b><span>${t.desc}</span>${locked(t.id)?`<span class="lk">${esc(unlockPlan(t.id)?.name||'Upgrade')}</span>`:''}</a>`).join('')}</div></section>`).join('')}
   </div>`;
   const ex=[['Suspicious link','http://paypa1-secure.account-verify.top/login?next=https://paypal.com'],['Server log',SAMPLE_LOG],['Email headers',SAMPLE_EMAIL],['IP range','10.20.4.17/22'],['Password hash','5f4dcc3b5aa765d61d8327deb882cf99']];
   const box=$('#tri',root),hint=$('#tri-hint',root);
@@ -946,13 +952,32 @@ T({id:'ir',cat:'Incident response',gl:'⚠',name:'Incident Playbook',desc:'Work 
   $('#ir-c',root).onclick=e=>copy($('#ir-rep',root).textContent,e.target);run();
 }});
 
+/* ---------- X09 Defense plan (tools each plan unlocks come from the shared X09 catalog) ---------- */
+let ALLOWED=null,PLAN=null,DEF_PLANS=[];
+const locked=id=>!!ALLOWED&&!ALLOWED.has(id);
+const unlockPlan=id=>DEF_PLANS.find(p=>(p.tools||[]).includes(id));
+async function loadPlan(){try{
+  const [me,pl]=await Promise.all([fetch('/api/me',{credentials:'same-origin'}).then(r=>r.json()),fetch('/api/plans').then(r=>r.json())]);
+  DEF_PLANS=(pl.catalog||[]).find(c=>c.key==='defense')?.plans||[];
+  const s=me.user?.products?.defense;
+  if(s?.plan&&Array.isArray(s.tools)){ALLOWED=new Set(s.tools);PLAN=s.planName}
+}catch{}}
+async function openPortal(btn){if(btn)btn.disabled=true;
+  try{const r=await fetch('/api/billing/portal',{method:'POST',credentials:'same-origin'});const d=await r.json();if(!r.ok)throw Error(d.error||'Could not open billing.');location.href=d.url}
+  catch(e){if(btn){btn.disabled=false;btn.textContent=e.message}}}
+function upsell(root,t){const p=unlockPlan(t.id);
+  root.innerHTML=`<div class="card upsell"><div class="lock">▣</div><h3 style="margin:0">${esc(t.name)} is part of ${esc(p?p.name:'a higher plan')}${p?` · ${esc(p.price)}/mo`:''}</h3>
+    <p class="muted" style="margin:0">You're on ${esc(PLAN||'your current plan')}. Upgrade to unlock it${p?` along with ${(p.tools||[]).filter(locked).length-1>0?(p.tools||[]).filter(locked).length-1+' more tools':'the rest of the toolkit'}`:''}. Your new price is prorated, so you only pay the difference for this month.</p>
+    <div class="row"><button class="btn" id="up-go">Upgrade to ${esc(p?p.name:'unlock')}</button><button class="btn ghost" id="up-back">Back to console</button></div></div>`;
+  $('#up-go',root).onclick=e=>openPortal(e.target);$('#up-back',root).onclick=()=>go('console')}
+
 /* ---------- shell ---------- */
 const nav=$('#nav'),view=$('#view'),rail=$('#rail'),scrim=$('#scrim');let current=null;
 function drawNav(filter=''){const f=filter.toLowerCase();const cats=[...new Set(TOOLS.map(t=>t.cat))];
-  nav.innerHTML=cats.map(c=>{const items=TOOLS.filter(t=>t.cat===c&&(!f||(t.name+' '+t.desc+' '+t.id).toLowerCase().includes(f)));return items.length?`<div class="grp"><h4>${c}</h4>${items.map(t=>`<a class="nav-a" href="#${t.id}" data-id="${t.id}"${t.id===current?' aria-current="page"':''}><span class="gl">${t.gl}</span>${t.name}</a>`).join('')}</div>`:''}).join('')||'<p class="muted small" style="padding:0 10px">No tool matches.</p>'}
+  nav.innerHTML=cats.map(c=>{const items=TOOLS.filter(t=>t.cat===c&&(!f||(t.name+' '+t.desc+' '+t.id).toLowerCase().includes(f)));return items.length?`<div class="grp"><h4>${c}</h4>${items.map(t=>`<a class="nav-a${locked(t.id)?' locked':''}" href="#${t.id}" data-id="${t.id}"${t.id===current?' aria-current="page"':''}><span class="gl">${t.gl}</span>${t.name}${locked(t.id)?'<span class="lk">▣</span>':''}</a>`).join('')}</div>`:''}).join('')||'<p class="muted small" style="padding:0 10px">No tool matches.</p>'}
 function go(id,input){const t=TOOLS.find(x=>x.id===id)||TOOLS[0];if(cleanup){cleanup();cleanup=null}current=t.id;
   view.innerHTML=`<header class="vhead"><p class="kicker">${t.id==='console'?'whoami':t.cat.toLowerCase().replace(/ & | /g,'-')}</p><h1>${t.name}</h1><p class="lede">${t.desc}</p></header><div id="tool"></div>`;
-  try{t.render($('#tool'),input)}catch(e){$('#tool').innerHTML=errHTML('This tool failed to load: '+e.message)}
+  try{if(locked(t.id))upsell($('#tool'),t);else t.render($('#tool'),input)}catch(e){$('#tool').innerHTML=errHTML('This tool failed to load: '+e.message)}
   $('#cmd').textContent=t.id==='console'?'console':'run '+t.id;drawNav($('#q').value);closeRail();
   if(location.hash.slice(1)!==t.id){try{history.replaceState(null,'','#'+t.id)}catch{location.hash=t.id}}window.scrollTo(0,0)}
 function openRail(){rail.classList.add('open');scrim.hidden=false}function closeRail(){rail.classList.remove('open');scrim.hidden=true}
@@ -964,12 +989,16 @@ $('#q').oninput=e=>drawNav(e.target.value);
 $('#q').onkeydown=e=>{if(e.key==='Enter'){const a=$('.nav-a',nav);if(a)go(a.dataset.id)}};
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){e.preventDefault();openRail();$('#q').focus()}if(e.key==='Escape')closeRail()});
 addEventListener('hashchange',()=>{const id=location.hash.slice(1);if(id&&id!==current)go(id)});
-go(location.hash.slice(1)||'console');
+loadPlan().then(()=>{
+  go(location.hash.slice(1)||'console');
+  const n=ALLOWED?[...ALLOWED].filter(x=>x!=='console').length:TOOLS.length-1;
+  $('#toolCount').textContent=(ALLOWED?`${n} of ${TOOLS.length-1}`:n)+' tools · runs on-device';
+  if(PLAN){const b=$('#planBtn');b.hidden=false;b.textContent=PLAN;b.onclick=()=>openPortal()}
+});
 
 /* X09 Space physics, animated logo, clock, app switcher */
 X09Space.start({density:.8,bodies:false});
 X09Space.logo($('#topLogo'),30);
-$('#toolCount').textContent=(TOOLS.length-1)+' tools · runs on-device';
 (function clk(){const d=new Date();$('#clock').textContent=d.toLocaleTimeString('en-US',{hour12:false});setTimeout(clk,1000-d.getMilliseconds())})();
 const swB=$('#swBtn'),swM=$('#swMenu');
 swB.onclick=e=>{e.stopPropagation();const o=swM.hidden;swM.hidden=!o;swB.setAttribute('aria-expanded',o)};

@@ -159,7 +159,7 @@
   }
   function planCards(prod, current) {
     return `<div class="x09-plans-inline"><div class="plans">${prod.plans.map((p) => {
-      const lines = prod.key === "ai"
+      const lines = p.feats?.length ? p.feats : prod.key === "ai"
         ? [`<b>${fmt(p.fast)}</b> Fast messages / mo`, `<b>${fmt(p.deep)}</b> Deep messages / mo`, "Claude Haiku + Sonnet"]
         : [`<b>${fmt(p.docs)}</b> AI drafts / mo`, "Unlimited documents", p.whiteLabel ? "<b>No X09 branding</b>" : "E-signature & PDF"];
       const cur = current === p.key;
@@ -183,10 +183,10 @@
       const status = active ? `${esc(s.planName)} · ${esc(s.price)}/mo${s.status === "past_due" ? " · payment issue" : renew ? ` · renews ${renew}` : ""}` : "No plan";
       const meters = !active ? "" : prod.key === "ai"
         ? meter("Fast messages", s.usage.fast, s.usage.fastLimit) + meter("Deep messages", s.usage.deep, s.usage.deepLimit)
-        : meter("AI drafts", s.usage.docs, s.usage.docsLimit);
+        : prod.key === "docs" ? meter("AI drafts", s.usage.docs, s.usage.docsLimit) : "";
       const here = X.site === prod.key;
       return `<div class="x09-prod${active ? " active" : ""}">
-        <div class="x09-prod-top"><span class="x09-switch-orb"><img src="/x09/logo-${prod.key === "ai" ? "ai" : "docs"}.svg" alt="" width="30" height="30" /></span>
+        <div class="x09-prod-top"><span class="x09-switch-orb"><img src="/x09/logo-${esc(prod.key)}.svg" alt="" width="30" height="30" /></span>
           <div class="grow"><b>${esc(prod.name)}</b><p class="pf-sub">${status}</p></div>
           <span class="x09-chip${active ? " on" : ""}">${active ? "Active" : "Inactive"}</span></div>
         ${meters}

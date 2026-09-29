@@ -37,8 +37,15 @@ try {
   assert.equal(res.status, 404); ok("unknown pages get the 404 page");
 
   let r = await api("/api/plans");
-  assert.equal(r.data.plans.length, 0); assert.equal(r.data.catalog.length, 2);
-  assert.equal(r.data.catalog[0].plans.length, 3); assert.equal(r.data.catalog[1].plans.length, 3); ok("catalog lists X09 AI + X09 Docs plans");
+  assert.equal(r.data.plans.length, 0); assert.equal(r.data.catalog.length, 3);
+  assert.equal(r.data.catalog[0].plans.length, 3); assert.equal(r.data.catalog[1].plans.length, 3);
+  assert.deepEqual(r.data.catalog[2].plans.map((p) => [p.key, p.price, p.tools.length]), [["guard", "$19", 8], ["sentinel", "$49", 13], ["fortress", "$99", 18]]);
+  ok("catalog lists X09 AI, X09 Docs and X09 Defense plans");
+
+  res = await api("/defense/", { raw: true });
+  let html = await res.text();
+  assert.match(html, /X09 Defense — plans/); assert.doesNotMatch(html, /<script id="core">/); assert.match(res.headers.get("cache-control"), /no-store/);
+  ok("signed-out visitors get the Defense plans page, not the toolkit");
 
   r = await api("/api/guide", { method: "POST", body: { messages: [{ role: "user", content: "hi" }] } });
   assert.equal(r.status, 401); ok("Ask X09 requires sign-in");
@@ -86,6 +93,23 @@ try {
 
   r = await api("/api/guide", { method: "POST", body: { messages: [{ role: "assistant", content: "hello" }] } });
   assert.equal(r.status, 400); ok("guide needs a question");
+
+  res = await api("/defense/", { raw: true }); assert.match(await res.text(), /X09 Defense — plans/); ok("a Docs plan doesn't unlock X09 Defense");
+  r = await api("/api/billing/checkout", { method: "POST", body: { product: "defense", plan: "guard" } });
+  assert.equal(r.status, 200);
+  const dcs = stripeCalls.filter((c) => c.path === "/checkout/sessions").pop();
+  assert.equal(dcs.params["line_items[0][price]"], "price_guard"); assert.equal(dcs.params["subscription_data[metadata][product]"], "defense");
+  ok("buy X09 Defense Guard from the Hub");
+  const dsub = { id: "sub_d", customer: dcs.params.customer, status: "active", metadata: { user_id: userId },
+    items: { data: [{ price: { id: "price_guard" }, current_period_end: Math.floor(Date.now() / 1000) + 30 * 86400 }] } };
+  const devt = JSON.stringify({ type: "customer.subscription.created", data: { object: dsub } });
+  r = await api("/api/stripe/webhook", { method: "POST", body: devt, headers: signed(devt) });
+  assert.equal(r.status, 200);
+  r = await api("/api/me");
+  assert.equal(r.data.user.products.defense.planName, "Guard"); assert.ok(r.data.user.products.defense.tools.includes("phish")); assert.ok(!r.data.user.products.defense.tools.includes("ir"));
+  ok("webhook activates Defense Guard with its tool list");
+  res = await api("/defense/", { raw: true }); html = await res.text();
+  assert.match(html, /<script id="core">/); assert.match(res.headers.get("cache-control"), /no-store/); ok("Defense plan unlocks the toolkit");
 
   r = await api("/api/profile", { method: "POST", body: { name: "Hub Pilot", company: "X09 Labs" } });
   assert.equal(r.data.user.name, "Hub Pilot"); ok("profile edits from the Hub");

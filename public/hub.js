@@ -13,7 +13,7 @@
     { id: "docs", product: "docs", orb: "DOC", logo: "/x09/logo-docs.svg", name: "X09 Docs", host: "docs.x09hub.com", url: "https://docs.x09hub.com", live: true, hue: "200,200,200",
       blurb: "AI invoices, estimates, proposals and contracts. Describe the job and X09 drafts it. Clients view, download and e-sign.",
       feats: ["AI drafts", "E-signature", "PDF + client links", "Estimate → invoice"] },
-    { id: "defense", orb: "DEF", logo: "/x09/logo-defense.svg", name: "X09 Defense", host: "x09hub.com/defense", url: "https://x09hub.com/defense/", live: true, hue: "170,170,170",
+    { id: "defense", product: "defense", orb: "DEF", logo: "/x09/logo-defense.svg", name: "X09 Defense", host: "x09hub.com/defense", url: "https://x09hub.com/defense/", live: true, hue: "170,170,170",
       blurb: "A cyber defense toolkit. Scan phishing links, analyze email headers and logs, inspect tokens, audit passwords and security headers. Everything runs in your browser.",
       feats: ["17 defense tools", "Phishing + log hunting", "Runs on-device", "Incident playbook"] },
   ];

@@ -39,6 +39,7 @@ export function makeHarness(worker, root, extraEnv = {}) {
       if (p === "/") p = "/index.html";
       let f = path.join(root, "public", p);
       if (!path.extname(f) && fs.existsSync(f + ".html")) f += ".html";
+      if (fs.existsSync(f) && fs.statSync(f).isDirectory() && fs.existsSync(path.join(f, "index.html"))) f = path.join(f, "index.html");
       if (!f.startsWith(path.join(root, "public")) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) {
         const nf = path.join(root, "public", extraEnv.__notFound || "index.html");
         return new Response(fs.readFileSync(nf), { status: extraEnv.__notFound ? 404 : 200, headers: { "content-type": "text/html" } });
@@ -51,6 +52,7 @@ export function makeHarness(worker, root, extraEnv = {}) {
   const PRICE_PLAN = {
     price_pilot: ["ai", "pilot"], price_commander: ["ai", "commander"], price_fleet: ["ai", "fleet"],
     price_solo: ["docs", "solo"], price_pro: ["docs", "pro"], price_business: ["docs", "business"],
+    price_guard: ["defense", "guard"], price_sentinel: ["defense", "sentinel"], price_fortress: ["defense", "fortress"],
   };
   const stripeCalls = [];
   const realFetch = globalThis.fetch;
@@ -67,6 +69,7 @@ export function makeHarness(worker, root, extraEnv = {}) {
         mk("price_pilot", "Pilot", 1200), mk("price_commander", "Commander", 2900), mk("price_fleet", "Fleet", 7900),
         mk("price_fleet_yearly", "Fleet", 79000, "year", 5),
         mk("price_solo", "X09 Docs Solo", 900), mk("price_pro", "X09 Docs Pro", 1900), mk("price_business", "X09 Docs Business", 3900),
+        mk("price_guard", "X09 Defense Guard", 1900), mk("price_sentinel", "X09 Defense Sentinel", 4900), mk("price_fortress", "X09 Defense Fortress", 9900),
         mk("price_other", "Something else", 500),
       ] });
     }
@@ -89,6 +92,7 @@ export function makeHarness(worker, root, extraEnv = {}) {
     // Placeholders on purpose: prices are found automatically by product name (like production)
     STRIPE_PRICE_PILOT: "price_REPLACE_ME", STRIPE_PRICE_COMMANDER: "price_REPLACE_ME", STRIPE_PRICE_FLEET: "price_REPLACE_ME",
     STRIPE_PRICE_SOLO: "price_REPLACE_ME", STRIPE_PRICE_PRO: "price_REPLACE_ME", STRIPE_PRICE_BUSINESS: "price_REPLACE_ME",
+    STRIPE_PRICE_GUARD: "price_REPLACE_ME", STRIPE_PRICE_SENTINEL: "price_REPLACE_ME", STRIPE_PRICE_FORTRESS: "price_REPLACE_ME",
     ...extraEnv,
   };
 

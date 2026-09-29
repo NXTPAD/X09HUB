@@ -24,17 +24,24 @@ All three sites run on **one X09 account system**:
 | X09 Docs | Solo | $9 | 40 AI drafts | `X09 Docs Solo` |
 | X09 Docs | Pro | $19 | 200 AI drafts | `X09 Docs Pro` |
 | X09 Docs | Business | $39 | 600 AI drafts, no X09 branding | `X09 Docs Business` |
+| X09 Defense | Guard | $19 | 7 tools (phishing, email headers, passwords, 2FA, encrypted notes, file check) | `X09 Defense Guard` |
+| X09 Defense | Sentinel | $49 | 12 tools (+ IOC extractor, log hunter, JWT, hash, encoder) | `X09 Defense Sentinel` |
+| X09 Defense | Fortress | $99 | All 17 tools (+ security headers, CSP, subnet, ports, incident playbook) | `X09 Defense Fortress` |
 
 Any active plan also includes **Ask X09** on the Hub (100 questions/month, Claude Haiku).
 Claude pricing used for the limits: Haiku 4.5 $1/$5 and Sonnet 5 $2/$10 per million input/output tokens. Even a customer who
 uses every message costs about half their plan price or less; typical use costs far less. X09 AI's limits were lowered from the
 Llama version because Claude costs more per message.
 
+X09 Defense runs in the browser, so it has no AI or server cost per customer — only Stripe's fee (about 95–97% margin).
+x09hub.com/defense only serves the toolkit to people with an active Defense plan; everyone else gets the plans page
+(`public/defense-plans.html`). Which tools each plan unlocks is the `tools` list on each plan in `src/core/catalog.js`.
+
 ### Secrets (set on EACH of the three Workers)
 `ANTHROPIC_API_KEY` (console.anthropic.com → API keys), `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`.
 
 ### Stripe
-All six products live in the same Stripe account (names above; each with a recurring monthly price). One webhook endpoint is
+All nine products live in the same Stripe account (names above; each with a recurring monthly price). One webhook endpoint is
 enough — e.g. `https://x09hub.com/api/stripe/webhook` — with events `checkout.session.completed`,
 `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`. Existing endpoints on
 ai./docs. keep working too (every site processes every product, and the writes are identical).

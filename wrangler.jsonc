@@ -9,7 +9,8 @@
     "binding": "ASSETS",
     "not_found_handling": "404-page",
     "html_handling": "auto-trailing-slash",
-    "run_worker_first": ["/api/*"]
+    // /defense is paid: the Worker checks for an X09 Defense plan before serving it
+    "run_worker_first": ["/api/*", "/defense", "/defense/*"]
   },
   // The SHARED X09 database (accounts, profiles, plans, chats, documents) — the same x09-db is
   // bound by X09 Hub, X09 AI and X09 Docs, so one account works everywhere.
@@ -28,7 +29,10 @@
     "STRIPE_PRICE_FLEET": "price_REPLACE_ME",
     "STRIPE_PRICE_SOLO": "price_REPLACE_ME",
     "STRIPE_PRICE_PRO": "price_REPLACE_ME",
-    "STRIPE_PRICE_BUSINESS": "price_REPLACE_ME"
+    "STRIPE_PRICE_BUSINESS": "price_REPLACE_ME",
+    "STRIPE_PRICE_GUARD": "price_REPLACE_ME",
+    "STRIPE_PRICE_SENTINEL": "price_REPLACE_ME",
+    "STRIPE_PRICE_FORTRESS": "price_REPLACE_ME"
   },
   // Secrets — add in Cloudflare (Worker → Settings → Variables and Secrets), never commit them:
   //   ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
