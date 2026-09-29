@@ -371,6 +371,12 @@
 
     if (!root.classList.contains("gate-open")) { headline(); return; }
 
+    // The page behind the prompt must start at the very top once you enter. Phones scroll the page
+    // to make room for the keyboard, and browsers restore the last scroll position, so undo both.
+    try { history.scrollRestoration = "manual"; } catch {}
+    const toTop = () => { window.scrollTo({ top: 0, left: 0, behavior: "instant" }); document.documentElement.scrollTop = 0; document.body.scrollTop = 0; };
+    toTop();
+
     // Boot sequence with mock connect / transmit / verify / prepare steps, then ask for X09
     const txt = (t) => { log.append(t); body.scrollTop = body.scrollHeight; };
     const live = () => { const el = document.createElement("span"); log.append(el); return el; };
@@ -415,10 +421,10 @@
       txt("\n");
       log.classList.remove("x09-cursor");
       add(`Welcome to <b>X09</b>.\nType <span class="hl">X09</span> to ENTER${matchMedia("(pointer: coarse)").matches ? "\n(Tap here to type.)" : ""}\n\n`);
-      form.hidden = false; inp.focus();
+      form.hidden = false; inp.focus({ preventScroll: true }); toTop();
     })();
 
-    body.addEventListener("click", () => { if (!form.hidden && !getSelection().toString()) inp.focus(); });
+    body.addEventListener("click", () => { if (!form.hidden && !getSelection().toString()) { inp.focus({ preventScroll: true }); toTop(); } });
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
       const v = inp.value.trim();
@@ -429,6 +435,8 @@
         return;
       }
       form.hidden = true;
+      inp.blur(); // close the phone keyboard so the page can settle at the top
+      toTop();
       add(`[ OK ] Access granted\nEntering X09 Hub…\n`);
       try { sessionStorage.setItem("x09-entered", "1"); } catch {}
       space.warp(1.6, 900);
@@ -436,6 +444,9 @@
       gate.classList.add("leaving");
       await sleep(500);
       root.classList.replace("gate-open", "gate-done");
+      toTop();
+      requestAnimationFrame(toTop);
+      setTimeout(toTop, 350); // after the phone keyboard finishes closing
       headline();
     });
   })();
