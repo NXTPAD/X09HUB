@@ -39,7 +39,7 @@ a{color:inherit}
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;flex:none}
 .x09-wordmark{font:800 1rem var(--mono);letter-spacing:-.02em;white-space:nowrap}
 .x09-wordmark small{font:500 .95rem var(--mono);color:var(--muted)}
-.x09-wordmark small::before{content:"\";margin-right:.05em}
+.x09-wordmark small::before{content:"\\";margin-right:.05em}
 .prompt{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dim);font-size:.82rem;padding-left:14px;border-left:1px solid var(--hair)}
 .prompt b{color:#d0d0d0;font-weight:600}
 .hud{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
@@ -63,7 +63,7 @@ a{color:inherit}
 
 /* dock */
 .rail{position:sticky;top:calc(82px + env(safe-area-inset-top,0px));align-self:start;max-height:calc(100vh - 96px);overflow:auto;margin:12px 0 12px 14px;background:#000;border:1px solid var(--hair-2);display:flex;flex-direction:column;padding:14px 0 12px}
-.rail-logo{display:flex;align-items:center;gap:10px;padding:0 16px 12px;border-bottom:1px solid var(--hair)}
+.rail-logo{text-decoration:none;display:flex;align-items:center;gap:10px;padding:0 16px 12px;border-bottom:1px solid var(--hair)}
 .rail-logo b{font-weight:800;font-size:.85rem}
 .rail-logo span{display:block;font-size:.7rem;color:var(--dim)}
 .search{margin:12px 12px 4px;position:relative}
