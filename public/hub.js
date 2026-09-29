@@ -390,20 +390,10 @@
   /* ================= Entry gate (full-height command prompt) + typed headline ================= */
   (function bootType() {
     const root = document.documentElement, gate = $("gate"), log = $("termLog"), form = $("termForm"), inp = $("termIn"), body = $("termBody");
-    const l1 = document.querySelector(".hero h1 .l1"), l2 = document.querySelector(".hero h1 .l2");
-    const t1 = l1.textContent, t2 = l2.textContent;
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduce ? 0 : ms));
     const add = (html) => { log.insertAdjacentHTML("beforeend", html); body.scrollTop = body.scrollHeight; };
 
-    async function headline() {
-      if (reduce) return;
-      l1.textContent = ""; l2.textContent = ""; l2.style.visibility = "hidden";
-      l1.classList.add("x09-cursor");
-      for (const ch of t1) { l1.textContent += ch; await sleep(42); }
-      l1.classList.remove("x09-cursor"); l2.style.visibility = ""; l2.classList.add("x09-cursor");
-      for (const ch of t2) { l2.textContent += ch; await sleep(42); }
-      space.warp(1.2, 700);
-    }
+    function headline() { if (!reduce) space.warp(1.2, 700); }
 
     if (!root.classList.contains("gate-open")) { headline(); return; }
 
@@ -482,7 +472,7 @@
     const n = new Date();
     $("clock").textContent = `${pad(n.getUTCHours())}:${pad(n.getUTCMinutes())}:${pad(n.getUTCSeconds())} UTC`;
     const s = Math.floor((Date.now() - t0) / 1000);
-    $("tplus").textContent = `T+ ${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
+    if ($("tplus")) $("tplus").textContent = `T+ ${pad(Math.floor(s / 60))}:${pad(s % 60)}`;
   }
   setInterval(tick, 1000); tick();
 

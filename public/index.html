@@ -198,6 +198,7 @@
   .links a { text-transform: uppercase; letter-spacing: .08em; font-size: .76rem !important; }
   .links a:hover { background: #fff !important; color: #000 !important; }
   .stage-hint b { color: #fff !important; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   /* logo-style images on the feature cards */
   .feat-ico.has-img { width: 84px; height: 84px; background: #000 !important; border: 1px solid rgba(255,255,255,.45) !important; }
   .feat-ico.has-img img { width: 64px; height: 64px; display: block; }
@@ -253,6 +254,7 @@
 
   <main data-x09-bg>
     <section class="hero wrap" aria-labelledby="h1" data-x09-bg>
+      <h1 id="h1" class="sr-only">X09 Hub — one account, every X09 app</h1>
       <div class="stage no-space" id="stage">
         <canvas id="orbit" aria-label="Interactive orbit map of X09 apps. Drag a world to fling it; tap to select."></canvas>
         <div class="sel-card" id="selCard" data-x09-solid>
@@ -266,13 +268,6 @@
         <div class="stage-hint"><b>Drag</b> a world to fling it · <b>tap</b> to select<br>← → to switch · Enter to launch</div>
       </div>
 
-      <span class="kicker">Launch window open · <span id="tplus">T+ 00:00</span></span>
-      <h1 id="h1"><span class="l1">One account.</span><span class="l2">Every X09 app.</span></h1>
-      <p class="lede">X09 AI and X09 Docs share one sign-in, one profile and one bill. Pick a world above, or grab one and fling it.</p>
-      <div class="ctas">
-        <a class="btn-primary" href="https://ai.x09hub.com" data-launch-id="ai" data-magnet>Launch X09 AI <svg viewBox="0 0 16 16" width="16" height="16" fill="none"><path d="M3 8h9M8.5 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
-        <a class="btn-ghost" href="https://docs.x09hub.com" data-launch-id="docs" data-magnet>Launch X09 Docs</a>
-      </div>
 
     </section>
 
