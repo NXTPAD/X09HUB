@@ -272,42 +272,6 @@
     X09.openAccount({ plans: product });
   }
 
-  /* ================= Bento ================= */
-  function renderBento() {
-    const [ai, docs, def] = DESTINATIONS;
-    const chip = (d) => { const m = planOf(d); return `<span class="x09-chip${d.live ? " on" : ""}">${!d.live ? "Reserved" : m?.plan ? esc(m.planName) : "Live"}</span>`; };
-    const btns = (d, i) => { const m = planOf(d); return `<div class="row-btns"><button class="btn-primary" data-launch="${i}">Launch</button><button class="btn-ghost" data-plans="${d.product}">${m?.plan ? "Manage" : "Plans"}</button></div>`; };
-    const aiPlans = plansFor(ai).map((p) => `<div class="plan-mini"><b>${esc(p.name)}</b><span>${esc(p.price)}</span><small>/mo</small><em>${Number(p.fast).toLocaleString()} fast · ${Number(p.deep).toLocaleString()} deep</em></div>`).join("");
-    const docsFrom = plansFor(docs)[0]?.price;
-    const anyPlan = X09.user && Object.values(X09.user.products || {}).some((p) => p.plan);
-    $("bento").innerHTML = `
-      <article class="tile hero-tile" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb has-logo">${orbInner(ai)}</span><div class="grow"><h3>${esc(ai.name)}</h3><span class="host">${esc(ai.host)}</span></div>${chip(ai)}</div>
-        <p>${esc(ai.blurb)}</p>
-        <ul class="feats">${ai.feats.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
-        ${aiPlans ? `<div class="plan-row">${aiPlans}</div>` : ""}
-        ${btns(ai, 0)}
-      </article>
-      <article class="tile docs" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb has-logo">${orbInner(docs)}</span><div class="grow"><h3>${esc(docs.name)}</h3><span class="host">${esc(docs.host)}</span></div></div>
-        <p>${esc(docs.blurb)}</p>
-        <ul class="feats">${docs.feats.map((f) => `<li>${esc(f)}</li>`).join("")}</ul>
-        <div class="from">${docsFrom ? `from <b>${esc(docsFrom)}</b>/mo` : ""} ${chip(docs)}</div>
-        ${btns(docs, 1)}
-      </article>
-      <article class="tile small" data-tilt data-x09-solid>
-        <div class="tile-top"><span class="orb has-logo">${orbInner(def)}</span><div class="grow"><h3>${esc(def.name)}</h3><span class="host">${esc(def.host)}</span></div>${chip(def)}</div>
-        <p class="note" style="margin-top:14px">${esc(def.blurb)}</p>
-        <div class="row-btns"><button class="btn-primary" data-launch="2">Launch</button></div>
-      </article>
-      <article class="tile small" data-tilt>
-        <div class="big-num x09-grad">1</div>
-        <p class="note"><b style="color:#fff">account, profile and bill</b> for every X09 app${anyPlan ? " — yours is active." : "."}</p>
-      </article>`;
-    $("bento").querySelectorAll("[data-launch]").forEach((b) => b.addEventListener("click", () => launch(DESTINATIONS[+b.dataset.launch])));
-    $("bento").querySelectorAll("[data-plans]").forEach((b) => b.addEventListener("click", () => openPlans(b.dataset.plans)));
-  }
-
   /* ================= X09 ID ================= */
   function renderUser(u) {
     const btn = $("accountBtn");
@@ -322,7 +286,7 @@
       $("meBilling").hidden = !u.hasBilling;
       $("askFoot").textContent = u.guide?.limit ? `${u.guide.used} of ${u.guide.limit} questions used this month · included with your plan` : "Included with any X09 plan · pick one to start asking";
     } else $("askFoot").textContent = "Included with any X09 plan · 100 questions a month";
-    renderBento(); select(selected);
+    select(selected);
   }
   $("accountBtn").addEventListener("click", () => (X09.user ? X09.openAccount() : X09.openAuth("login")));
   $("meOpen").addEventListener("click", () => X09.openAccount());
@@ -485,7 +449,7 @@
     if (params.has("checkout") || params.has("portal")) history.replaceState(null, "", "/");
     try { catalog = (await X09.api("/api/plans")).catalog; X09.catalog = catalog; } catch {}
     await X09.refresh();
-    renderBento(); select(0);
+    select(0);
     if (checkout === "success") {
       X09.toast("Payment received — activating your plan…", 6000);
       const active = () => !!X09.user?.products?.[product]?.plan;
