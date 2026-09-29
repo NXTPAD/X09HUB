@@ -17,14 +17,14 @@
   html, body { background: #000; color: #f5f5f5; margin: 0; }
   body { font: 15px/1.55 var(--mono); -webkit-font-smoothing: antialiased; min-height: 100vh; }
   .shell { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 12px 14px 60px; }
-  .bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; align-items: center; gap: 12px; height: 58px; padding: 0 10px 0 16px; background: #000; border: 1px solid var(--line-2); }
-  .bar .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-  .bar .grow { flex: 1; }
-  .bar .x09-wordmark { font: 800 1rem var(--mono); }
-  .bar .x09-wordmark small { font: 500 .95rem var(--mono); color: var(--muted); }
-  .bar .x09-wordmark small::before { content: "\\"; }
-  .bar button { font: 700 .74rem var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: 10px 14px; border: 1px solid var(--line-2); background: #000; color: #fff; cursor: pointer; }
-  .bar button:hover { border-color: #fff; }
+  /* Top bar — same as the X09 Hub header. (Not called .bar: the shared x09.css uses .bar for the thin usage meters.) */
+  .navpill { position: sticky; top: 12px; z-index: 50; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 10px 0 18px; background: #000; border: 1px solid rgba(255,255,255,.32); }
+  .navpill .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+  .navpill .grow { flex: 1; }
+  .navpill .x09-wordmark { font: 800 1rem var(--mono); letter-spacing: -.02em; }
+  .navpill .x09-wordmark small { font: 500 .95rem var(--mono) !important; color: var(--muted) !important; }
+  .navpill .account-btn { font-family: var(--mono) !important; letter-spacing: .08em !important; text-transform: uppercase !important; }
+  @media (max-width: 960px) { .navpill { height: 54px; padding: 0 6px 0 14px; gap: 8px; top: 10px; } }
 
   .hero { padding: 64px 4px 34px; max-width: 760px; }
   .hero .prompt { color: var(--dim); font-size: .82rem; margin-bottom: 18px; }
@@ -77,11 +77,11 @@
 </head>
 <body>
 <div class="shell">
-  <header class="bar">
-    <a class="brand" href="/" aria-label="X09 Hub"><span data-x09-logo="30"></span><span class="x09-wordmark">X09<small>DEFENSE</small></span></a>
+  <header class="navpill">
+    <a class="brand" href="/" aria-label="X09 Hub"><span data-x09-logo="32"></span><span class="x09-wordmark">X09<small>DEFENSE</small></span></a>
     <span class="grow"></span>
-    <span data-x09-switcher></span>
-    <button id="signIn" type="button">Sign in</button>
+    <div data-x09-switcher></div>
+    <button class="account-btn" id="signIn" type="button">Sign in</button>
   </header>
 
   <section class="hero">
